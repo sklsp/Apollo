@@ -1411,10 +1411,28 @@
                                     <input type="file" id="ds-file-input" accept=".png,.jpg,.jpeg" multiple style="display:none" />
                                     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
                                         <button class="btn secondary" id="ds-caption-btn">Generate captions with AI</button>
+                                        <button class="btn secondary" id="ds-caption-job-btn">Caption as background job</button>
                                         <label class="toggle-label"><input type="checkbox" id="ds-overwrite" /> Overwrite my edits</label>
                                         <button class="btn secondary small" id="ds-refresh">Refresh</button>
                                     </div>
                                     <div class="field-hint" id="ds-caption-hint" style="margin-top:8px"></div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">
+                                    Dataset quality
+                                    <button class="btn secondary small" id="ds-validate-btn" style="float:right">Validate dataset</button>
+                                </div>
+                                <div id="ds-quality-empty" class="field-hint">Run validation to check for duplicates, broken images and caption coverage.</div>
+                                <div id="ds-quality" style="display:none">
+                                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+                                        <div style="font-size:28px;font-weight:700" id="dsq-score">&mdash;</div>
+                                        <div>
+                                            <div style="font-weight:600">out of 100</div>
+                                            <div class="field-hint" id="dsq-summary"></div>
+                                        </div>
+                                    </div>
+                                    <ul id="dsq-findings" style="margin:0;padding-left:18px;font-size:13px;line-height:1.7"></ul>
                                 </div>
                             </div>
                             <div class="card">
@@ -1431,8 +1449,14 @@
                                     <div class="card">
                                         <div class="card-title">Training configuration</div>
                                         <div class="field">
-                                            <label>Project</label>
+                                            <label for="tr-project">Project</label>
                                             <input type="text" id="tr-project" readonly placeholder="Select a project first" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="tr-preset">Preset
+                                                <span class="field-hint" id="tr-preset-desc"></span>
+                                            </label>
+                                            <select id="tr-preset"></select>
                                         </div>
                                         <div class="field">
                                             <label for="tr-arch">Architecture</label>
@@ -2187,6 +2211,8 @@
                 archs: ["sdxl", "flux", "qwen_image", "krea2"],
                 genPoll: null,
                 trainPoll: null,
+                captionPoll: null,
+                presets: [],
                 galleryFiles: []
             };
 
@@ -2699,6 +2725,122 @@
                 }
             }
 
+            // ---------- LoRA: caption background job ----------
+            async function startCaptionJob() {
+                if (!ws.currentProjectId) { notify("Select a project first."); return; }
+                const button = $("#ds-caption-job-btn");
+                button.disabled = true;
+                button.textContent = "Queued…";
+                try {
+                    const job = await jsonPost(`/loras/projects/${ws.currentProjectId}/caption-jobs`, {
+                        overwrite: $("#ds-overwrite").checked
+                    });
+                    $("#ds-caption-hint").textContent = "Captioning runs in the background — you can keep working. Watch it in the job list below.";
+                    pollCaptionJob(job.id);
+                } catch (error) {
+                    notify(error.message);
+                    button.disabled = false;
+                    button.textContent = "Caption as background job";
+                }
+            }
+
+            function pollCaptionJob(jobId) {
+                clearInterval(ws.captionPoll);
+                ws.captionPoll = setInterval(async () => {
+                    let job;
+                    try { job = await api(`/jobs/${jobId}`); }
+                    catch (_) { return; }
+                    $("#ds-caption-hint").textContent =
+                        `${job.status}: ${job.message || ""}${job.progress !== null ? ` (${job.progress}%)` : ""}`;
+                    if (["completed", "failed", "cancelled"].includes(job.status)) {
+                        clearInterval(ws.captionPoll);
+                        ws.captionPoll = null;
+                        $("#ds-caption-job-btn").disabled = false;
+                        $("#ds-caption-job-btn").textContent = "Caption as background job";
+                        await loadImages();
+                        loadProjects();
+                        if (job.status === "failed") notify(job.error || "Captioning failed");
+                    }
+                }, 2000);
+            }
+
+            // ---------- LoRA: dataset validation ----------
+            async function validateDataset() {
+                if (!ws.currentProjectId) { notify("Select a project first."); return; }
+                const button = $("#ds-validate-btn");
+                button.disabled = true;
+                try {
+                    const report = await api(`/loras/projects/${ws.currentProjectId}/validate`);
+                    $("#ds-quality-empty").style.display = "none";
+                    $("#ds-quality").style.display = "block";
+                    $("#dsq-score").textContent = report.score;
+
+                    const problems = [];
+                    if (report.invalid_images) problems.push(`${report.invalid_images} broken`);
+                    if (report.duplicates) problems.push(`${report.duplicates} duplicates`);
+                    if (report.near_duplicates) problems.push(`${report.near_duplicates} near-duplicates`);
+                    if (report.missing_captions) problems.push(`${report.missing_captions} missing captions`);
+                    if (report.extreme_resolutions) problems.push(`${report.extreme_resolutions} extreme resolutions`);
+                    $("#dsq-summary").textContent = problems.length
+                        ? problems.join(" · ")
+                        : `${report.valid_images}/${report.total_images} images clean`;
+
+                    const list = $("#dsq-findings");
+                    list.innerHTML = "";
+                    report.findings.slice(0, 30).forEach(finding => {
+                        const li = document.createElement("li");
+                        li.textContent = `${finding.kind}: ${finding.filename}${finding.detail ? " — " + finding.detail : ""}`;
+                        list.appendChild(li);
+                    });
+                    if (report.findings.length > 30) {
+                        const li = document.createElement("li");
+                        li.textContent = `…and ${report.findings.length - 30} more`;
+                        list.appendChild(li);
+                    }
+                } catch (error) {
+                    notify(error.message);
+                } finally {
+                    button.disabled = false;
+                }
+            }
+
+            // ---------- LoRA: training presets ----------
+            async function loadPresets() {
+                let data;
+                try {
+                    data = await api("/loras/training/presets");
+                } catch (_) { return; }
+                ws.presets = data.presets;
+
+                const select = $("#tr-preset");
+                select.innerHTML = "";
+                const blank = document.createElement("option");
+                blank.value = "";
+                blank.textContent = "Custom (no preset)";
+                select.appendChild(blank);
+                data.presets.forEach(preset => {
+                    const option = document.createElement("option");
+                    option.value = preset.id;
+                    option.textContent = preset.label;
+                    select.appendChild(option);
+                });
+            }
+
+            function applyPreset(presetId) {
+                const preset = (ws.presets || []).find(p => p.id === presetId);
+                $("#tr-preset-desc").textContent = preset ? preset.description : "";
+                if (!preset) return;
+
+                const values = preset.values;
+                if (values.steps) $("#tr-steps").value = values.steps;
+                if (values.learning_rate) $("#tr-lr").value = values.learning_rate;
+                if (values.batch_size) $("#tr-batch").value = values.batch_size;
+                if (values.lora_rank) $("#tr-rank").value = values.lora_rank;
+                if (values.lora_alpha) $("#tr-alpha").value = values.lora_alpha;
+                if (values.save_every) $("#tr-save").value = values.save_every;
+                if (values.resolution) $("#tr-res").value = values.resolution.join(",");
+            }
+
             // ---------- LoRA: training ----------
             function trainingBody() {
                 const resolution = $("#tr-res").value.split(",")
@@ -2829,25 +2971,34 @@
                 await refreshComfyStatus();
                 await loadWorkflows();
 
-                // Prefer a workflow that actually has a LoRA node.
-                const loraWorkflow = ws.workflows.find(w => w.supported_inputs.includes("lora_name"));
-                if (loraWorkflow) {
-                    $("#comfy-workflow").value = loraWorkflow.id;
-                    onWorkflowChange();
+                // Ask the backend to pick a LoRA-capable workflow and prefill
+                // everything; it also warns when ComfyUI cannot see the file.
+                let setup = null;
+                try {
+                    setup = await api(
+                        `/comfyui/test-lora?lora=${encodeURIComponent(filename)}` +
+                        `&trigger_word=${encodeURIComponent(triggerWord || "")}`
+                    );
+                } catch (error) {
+                    notify(`Could not prepare a LoRA test: ${error.message}`);
+                    return;
                 }
 
-                const select = $("#comfy-lora");
-                if (!Array.from(select.options).some(option => option.value === filename)) {
+                $("#comfy-workflow").value = setup.generation_request.workflow_id;
+                onWorkflowChange();
+                $("#comfy-prompt").value = setup.generation_request.prompt;
+                const loraSelect = $("#comfy-lora");
+                if (!Array.from(loraSelect.options).some(option => option.value === filename)) {
                     const option = document.createElement("option");
                     option.value = filename;
                     option.textContent = `${filename} (not yet visible to ComfyUI)`;
-                    select.appendChild(option);
-                    notify(`"${filename}" is not in ComfyUI's loras folder yet. Copy it there, or point COMFYUI_LORA_DIR at it, then restart ComfyUI.`);
+                    loraSelect.appendChild(option);
                 }
-                select.value = filename;
-                if (triggerWord && !$("#comfy-prompt").value.includes(triggerWord)) {
-                    $("#comfy-prompt").value = `${triggerWord}, ${$("#comfy-prompt").value}`.trim();
-                }
+                loraSelect.value = filename;
+                $("#comfy-lora-model").value = setup.generation_request.lora_strength_model;
+                $("#comfy-lora-clip").value = setup.generation_request.lora_strength_clip;
+
+                (setup.warnings || []).forEach(warning => notify(warning));
             }
 
             // ---------- tabs ----------
@@ -2876,6 +3027,9 @@
             $("#lp-create-btn").addEventListener("click", createProject);
             $("#ds-refresh").addEventListener("click", () => { loadImages(); loadProjects(); });
             $("#ds-caption-btn").addEventListener("click", generateCaptions);
+            $("#ds-caption-job-btn").addEventListener("click", startCaptionJob);
+            $("#ds-validate-btn").addEventListener("click", validateDataset);
+            $("#tr-preset").addEventListener("change", (e) => applyPreset(e.target.value));
             $("#ds-save-trigger").addEventListener("click", async () => {
                 if (!ws.currentProjectId) return;
                 try {
@@ -2909,6 +3063,7 @@
             $("#lib-refresh").addEventListener("click", loadLibrary);
 
             fillArchSelects();
+            loadPresets();
             refreshSystemStatus();
             setInterval(refreshSystemStatus, 30000);
         })();

@@ -113,9 +113,12 @@ class TestDatasetValidation:
         assert report["average_resolution"] == [512, 512]
 
     def test_score_never_goes_below_zero(self):
-        store = {key: b"garbage" for key in ("a", "b", "c", "d")}
+        # 10 invalid images (capped at 150 points) + 10 missing captions (50)
+        # would be -100 raw; the floor must hold at zero.
+        keys = [str(i) for i in range(10)]
+        store = {key: b"garbage" for key in keys}
         images = [{"id": key, "filename": f"{key}.png", "caption": ""}
-                  for key in store]
+                  for key in keys]
         report = validate_dataset(images, self._read(store)).to_dict()
         assert report["score"] == 0
 
@@ -290,7 +293,7 @@ class TestLoraTestIntegration:
         del graph["10"]
         service.save_workflow("plain", graph)
 
-        with pytest.raises(Exception, match="no LoRA node"):
+        with pytest.raises(Exception, match="has no LoRA node"):
             service.prepare_lora_test("x.safetensors", workflow_id="plain")
 
 

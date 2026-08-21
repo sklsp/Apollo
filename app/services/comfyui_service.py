@@ -450,22 +450,28 @@ class ComfyUIService:
         """
         workflows = self.list_workflows()
         candidates = [w for w in workflows if "lora_name" in w.supported_inputs]
-        if not candidates:
+
+        chosen: WorkflowInfo | None = None
+        if workflow_id:
+            requested = next((w for w in workflows if w.id == workflow_id), None)
+            if requested is None:
+                raise WorkflowError(
+                    f"Workflow '{workflow_id}' does not exist",
+                    status_code=404,
+                )
+            if "lora_name" not in requested.supported_inputs:
+                raise WorkflowError(
+                    f"Workflow '{workflow_id}' has no LoRA node, so it cannot "
+                    "be used to test a LoRA",
+                    status_code=400,
+                )
+            chosen = requested
+        elif not candidates:
             raise WorkflowError(
                 "No saved workflow has a LoRA node. Import one with a "
                 "'LoraLoader' node to test LoRAs.",
                 status_code=404,
             )
-
-        chosen: WorkflowInfo | None = None
-        if workflow_id:
-            chosen = next((w for w in candidates if w.id == workflow_id), None)
-            if chosen is None:
-                raise WorkflowError(
-                    f"Workflow '{workflow_id}' either does not exist or has no "
-                    "LoRA node",
-                    status_code=404,
-                )
         else:
             chosen = candidates[0]
 

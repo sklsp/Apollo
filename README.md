@@ -24,9 +24,12 @@ AI Document Agent is a full AI workspace that runs entirely on your machine:
 | **Chat** | Conversational AI powered by local Ollama models |
 | **Document RAG** | Upload files, embed chunks, retrieve relevant context at query time |
 | **Prompt library** | Save, edit, and reuse templates with `{input}` variables |
-| **Session memory** | Multiple chats with per-session history and settings |
+| **Session memory** | Multiple chats with per-session history and settings — persisted across restarts |
 | **ComfyUI generation** | Run local ComfyUI workflows from the dashboard, with importable workflow JSON |
 | **LoRA Studio** | Build datasets, caption them with a local vision model, train LoRAs via Ostris AI Toolkit |
+| **Dataset quality control** | One-click validation: duplicates, broken images, caption coverage, 0–100 quality score |
+| **Training presets** | Character / Style / Product / Concept starting points with plain-language explanations |
+| **One-click LoRA testing** | After training, jump straight into a prefilled ComfyUI generation with the LoRA loaded |
 
 Each module is independent: **chat and RAG keep working when ComfyUI, Ollama, or AI Toolkit are unavailable.**
 
@@ -250,6 +253,7 @@ python main.py --api
 | `AI_TOOLKIT_PYTHON` | *(empty)* | That toolkit's interpreter, e.g. `W:/AI-Toolkit/venv/Scripts/python.exe` |
 | `LORA_DATA_DIR` | `./data/loras` | LoRA projects, datasets, configs, outputs |
 | `GENERATED_DIR` | `./data/generated` | Images pulled back from ComfyUI |
+| `DATA_DIR` | `./data` | Where `documents.json` / `sessions.json` persistence lives |
 | `MAX_IMAGE_UPLOAD_MB` | `25` | Per-image cap for dataset uploads |
 | `PORT` | `8000` | Server port (`launcher.py`) |
 | `CLOUDFLARED_PATH` | auto-detect | Path to `cloudflared` executable |

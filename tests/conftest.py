@@ -83,6 +83,14 @@ def project_service(tmp_settings):
     return LoRAProjectService(data_dir=tmp_settings.lora_data_dir)
 
 
+@pytest.fixture
+def project(project_service):
+    """A ready-made LoRA project for dataset/caption/training tests."""
+    return project_service.create_project(
+        "Test Character", description="demo", arch="sdxl", trigger_word="p3r5on"
+    )
+
+
 def png_bytes(size: int = 64) -> bytes:
     """A minimal but genuinely valid 1x1 PNG, padded to ``size`` bytes."""
     png = bytes.fromhex(
