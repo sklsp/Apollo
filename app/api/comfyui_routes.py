@@ -150,6 +150,30 @@ def generate(
     return _job_response(job)
 
 
+@router.get("/test-lora")
+def prepare_lora_test(
+    lora: str,
+    workflow_id: str | None = None,
+    prompt: str | None = None,
+    trigger_word: str | None = None,
+    service: ComfyUIService = Depends(get_comfyui_service),
+) -> dict:
+    """One-click LoRA test setup: pick a workflow, prefill inputs, warn on gaps.
+
+    Returns a ready ``generation_request`` for ``POST /comfyui/generate`` —
+    nothing is queued until the user confirms.
+    """
+    try:
+        return service.prepare_lora_test(
+            lora_filename=lora,
+            workflow_id=workflow_id,
+            prompt=prompt,
+            trigger_word=trigger_word,
+        )
+    except (ServiceError, UnsafePathError) as exc:
+        raise _http_error(exc) from exc
+
+
 @router.get("/jobs/{job_id}", response_model=JobResponse)
 def get_generation_job(
     job_id: str,

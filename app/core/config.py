@@ -61,6 +61,9 @@ class Settings:
     generated_dir: str = _resolve(os.getenv("GENERATED_DIR", "./data/generated"))
     jobs_file: str = _resolve(os.getenv("JOBS_FILE", "./data/jobs.json"))
 
+    # Where documents.json / sessions.json live (restart persistence).
+    data_dir: str = _resolve(os.getenv("DATA_DIR", "./data"))
+
     # ---- Upload limits ----
     max_image_upload_mb: float = float(os.getenv("MAX_IMAGE_UPLOAD_MB", "25"))
 

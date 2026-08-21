@@ -432,6 +432,81 @@ class ComfyUIService:
             raise WorkflowError(f"Image '{filename}' not found", status_code=404)
         return path.read_bytes()
 
+    # ---------- LoRA test integration ----------
+
+    def prepare_lora_test(
+        self,
+        lora_filename: str,
+        workflow_id: str | None = None,
+        prompt: str | None = None,
+        trigger_word: str | None = None,
+    ) -> dict[str, Any]:
+        """Build everything needed to test a trained LoRA in one click.
+
+        Picks (or validates) a workflow with a LoRA node, checks that ComfyUI
+        can actually see the file, and returns a prefilled
+        :class:`GenerationRequest`-shaped payload for ``POST /comfyui/generate``.
+        No generation is queued here — the user still presses Generate.
+        """
+        workflows = self.list_workflows()
+        candidates = [w for w in workflows if "lora_name" in w.supported_inputs]
+        if not candidates:
+            raise WorkflowError(
+                "No saved workflow has a LoRA node. Import one with a "
+                "'LoraLoader' node to test LoRAs.",
+                status_code=404,
+            )
+
+        chosen: WorkflowInfo | None = None
+        if workflow_id:
+            chosen = next((w for w in candidates if w.id == workflow_id), None)
+            if chosen is None:
+                raise WorkflowError(
+                    f"Workflow '{workflow_id}' either does not exist or has no "
+                    "LoRA node",
+                    status_code=404,
+                )
+        else:
+            chosen = candidates[0]
+
+        connected = False
+        visible_loras: list[str] = []
+        try:
+            status = self.status()
+            connected = bool(status.get("connected"))
+            visible_loras = status.get("loras") or []
+        except ComfyUIServiceError:
+            pass
+
+        warnings: list[str] = []
+        if not connected:
+            warnings.append(
+                "ComfyUI is not reachable; start it before generating."
+            )
+        elif lora_filename not in visible_loras:
+            warnings.append(
+                f"'{lora_filename}' is not in ComfyUI's loras folder yet. Copy "
+                "it there (or set COMFYUI_LORA_DIR) and restart ComfyUI."
+            )
+
+        full_prompt = prompt or (
+            f"{trigger_word}, portrait photo, soft lighting" if trigger_word
+            else "portrait photo, soft lighting"
+        )
+
+        return {
+            "workflow": chosen.to_dict(),
+            "generation_request": {
+                "workflow_id": chosen.id,
+                "prompt": full_prompt,
+                "lora_name": lora_filename,
+                "lora_strength_model": 0.8,
+                "lora_strength_clip": 0.8,
+            },
+            "connected": connected,
+            "warnings": warnings,
+        }
+
 
 def _first_error(status: dict) -> str:
     for message in status.get("messages", []):

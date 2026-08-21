@@ -44,6 +44,7 @@ def tmp_settings(tmp_path):
         "comfyui_lora_dir": "",
         "ai_toolkit_path": "",
         "ai_toolkit_python": "",
+        "data_dir": str(tmp_path / "data"),
     }
     originals = {name: getattr(config.settings, name) for name in replacements}
 

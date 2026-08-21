@@ -146,6 +146,8 @@ def validate_dataset(
     Returns:
         A :class:`DatasetReport` with per-image findings and a 0-100 score.
     """
+    from io import BytesIO
+
     from PIL import Image
 
     report = DatasetReport(total_images=len(images))
@@ -179,7 +181,7 @@ def validate_dataset(
         # ---- image decoding ----
         try:
             content = read_bytes(image_id)
-            with Image.open(_BytesView(content)) as image:
+            with Image.open(BytesIO(content)) as image:
                 image.load()
                 width, height = image.size
         except Exception as exc:  # noqa: BLE001 - any decode failure is "invalid"
@@ -288,18 +290,3 @@ def _score(report: DatasetReport) -> int:
         penalty += min(count, 10) * weight
 
     return max(0, 100 - penalty)
-
-
-class _BytesView:
-    """Minimal file-like wrapper so Pillow can read from a bytes object."""
-
-    def __init__(self, data: bytes) -> None:
-        import io
-
-        self._buffer = io.BytesIO(data)
-
-    def __enter__(self) -> Any:
-        return self._buffer
-
-    def __exit__(self, *args: Any) -> None:
-        self._buffer.close()

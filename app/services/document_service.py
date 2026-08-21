@@ -3,6 +3,8 @@
 import re
 from typing import TypedDict
 
+from app.core.persistence import JsonPersist
+
 
 class Document(TypedDict):
     """Document structure."""
@@ -13,12 +15,42 @@ class Document(TypedDict):
 
 
 class DocumentService:
-    """In-memory document storage with keyword-based retrieval. Easily upgradeable with embeddings."""
+    """Persistent document storage with keyword-based retrieval.
+
+    Documents survive application restarts via ``data/documents.json``; the
+    in-memory dict stays the source of truth while running.
+    """
 
     def __init__(self) -> None:
         # Structure: {doc_id: Document}
         self._storage: dict[str, Document] = {}
         self._doc_counter = 0
+        self._persist = JsonPersist("documents.json")
+        self._load()
+
+    def _load(self) -> None:
+        stored = self._persist.load(default=[])
+        if not isinstance(stored, list):
+            return
+        for raw in stored:
+            if not isinstance(raw, dict) or "id" not in raw:
+                continue
+            doc_id = str(raw["id"])
+            self._storage[doc_id] = {
+                "id": doc_id,
+                "content": str(raw.get("content", "")),
+                "source": str(raw.get("source", "upload")),
+            }
+        # Keep the counter ahead of any restored id so new ids never collide.
+        for doc_id in self._storage:
+            try:
+                number = int(doc_id.rsplit("_", 1)[-1])
+                self._doc_counter = max(self._doc_counter, number + 1)
+            except ValueError:
+                continue
+
+    def _save(self) -> None:
+        self._persist.save(list(self._storage.values()))
 
     def store_document(self, content: str, source: str = "upload") -> str:
         """Store a single document.
@@ -38,6 +70,7 @@ class DocumentService:
             "content": content,
             "source": source,
         }
+        self._save()
 
         return doc_id
 
@@ -86,6 +119,7 @@ class DocumentService:
         """
         if doc_id in self._storage:
             del self._storage[doc_id]
+            self._save()
             return True
         return False
 
@@ -93,6 +127,7 @@ class DocumentService:
         """Clear all documents."""
         self._storage.clear()
         self._doc_counter = 0
+        self._save()
 
     def get_relevant_context(self, query: str, top_k: int = 3) -> str:
         """Retrieve relevant documents using keyword matching.

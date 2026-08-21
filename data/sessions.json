@@ -1,0 +1,26 @@
+{
+  "sessions": {
+    "default": [
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2026-08-21T22:31:55.366923+00:00"
+      },
+      {
+        "role": "assistant",
+        "content": "echo:You are an AI assistant.\nYou are a helpful AI assistant. Answer the user's question clearly and concisely.\n\nUSER QUESTION:\nhello",
+        "timestamp": "2026-08-21T22:31:55.368784+00:00"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2026-08-21T22:31:55.433445+00:00"
+      }
+    ]
+  },
+  "settings": {
+    "default": {
+      "use_documents": true
+    }
+  }
+}
