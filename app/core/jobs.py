@@ -55,7 +55,21 @@ class Job:
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["status"] = self.status.value
+        data["elapsed_seconds"] = _elapsed_seconds(self)
         return data
+
+
+def _elapsed_seconds(job: Job) -> float | None:
+    """Seconds spent working, or None when the job has not started yet."""
+    if not job.started_at:
+        return None
+    end = job.completed_at or _now()
+    try:
+        start = datetime.fromisoformat(job.started_at)
+        finish = datetime.fromisoformat(end)
+    except ValueError:
+        return None
+    return round(max((finish - start).total_seconds(), 0.0), 1)
 
 
 class JobStore:

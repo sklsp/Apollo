@@ -75,6 +75,87 @@ ARCH_DEFAULTS: dict[str, dict[str, Any]] = {
 }
 DEFAULT_ARCH = "sdxl"
 
+# Reusable starting points. Every value here is something AI Toolkit accepts;
+# users can override any of it per-run from the training UI.
+TRAINING_PRESETS: dict[str, dict[str, Any]] = {
+    "character": {
+        "label": "Character LoRA",
+        "description": (
+            "A specific person, pet or character. Moderate rank for detail, "
+            "medium step count, low learning rate to avoid overfitting a "
+            "small dataset."
+        ),
+        "values": {
+            "steps": 2000,
+            "learning_rate": 1e-4,
+            "batch_size": 1,
+            "lora_rank": 16,
+            "save_every": 250,
+            "resolution": [512, 768, 1024],
+        },
+    },
+    "style": {
+        "label": "Style LoRA",
+        "description": (
+            "An art style or aesthetic applied across many subjects. Higher "
+            "rank captures stylistic texture; needs more varied images."
+        ),
+        "values": {
+            "steps": 3000,
+            "learning_rate": 1e-4,
+            "batch_size": 1,
+            "lora_rank": 32,
+            "save_every": 250,
+            "resolution": [768, 1024],
+        },
+    },
+    "product": {
+        "label": "Product LoRA",
+        "description": (
+            "A specific object (product, prop, vehicle) shot consistently. "
+            "Low rank keeps it focused and small; short runs usually suffice."
+        ),
+        "values": {
+            "steps": 1500,
+            "learning_rate": 8e-5,
+            "batch_size": 1,
+            "lora_rank": 8,
+            "save_every": 250,
+            "resolution": [768, 1024],
+        },
+    },
+    "concept": {
+        "label": "Concept LoRA",
+        "description": (
+            "An abstract idea or visual motif rather than one subject. "
+            "Balanced settings with more steps for generalisation."
+        ),
+        "values": {
+            "steps": 2500,
+            "learning_rate": 1e-4,
+            "batch_size": 2,
+            "lora_rank": 16,
+            "save_every": 500,
+            "resolution": [512, 768],
+        },
+    },
+    "general": {
+        "label": "General Purpose",
+        "description": (
+            "AI Toolkit's own example defaults. A safe starting point when "
+            "you are not sure what your dataset needs yet."
+        ),
+        "values": {
+            "steps": 2000,
+            "learning_rate": 1e-4,
+            "batch_size": 1,
+            "lora_rank": 16,
+            "save_every": 250,
+            "resolution": [512, 1024],
+        },
+    },
+}
+
 
 def build_training_config(
     *,
@@ -342,6 +423,18 @@ class LoRATrainingService:
             if configured
             else "Set AI_TOOLKIT_PATH and AI_TOOLKIT_PYTHON to enable LoRA training.",
         }
+
+    def presets(self) -> list[dict[str, Any]]:
+        """Reusable training starting points, with human-readable explanations."""
+        return [
+            {
+                "id": preset_id,
+                "label": preset["label"],
+                "description": preset["description"],
+                "values": dict(preset["values"]),
+            }
+            for preset_id, preset in TRAINING_PRESETS.items()
+        ]
 
     # ---------- config ----------
 

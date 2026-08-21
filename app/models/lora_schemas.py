@@ -57,6 +57,23 @@ class DatasetImageListResponse(BaseModel):
     count: int
 
 
+class DatasetValidationResponse(BaseModel):
+    """Quality-control report for one dataset."""
+
+    total_images: int
+    valid_images: int
+    invalid_images: int
+    captioned: int
+    missing_captions: int
+    duplicates: int
+    near_duplicates: int
+    extreme_resolutions: int
+    average_resolution: list[int] | None = None
+    issue_count: int
+    score: int = Field(..., ge=0, le=100, description="Quality score out of 100")
+    findings: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class CaptionUpdate(BaseModel):
     caption: str = Field(..., description="Caption text written to the matching .txt")
 
@@ -111,6 +128,20 @@ class AIToolkitStatusResponse(BaseModel):
     python: str | None = None
     supported_archs: list[str] = Field(default_factory=list)
     error: str | None = None
+
+
+class TrainingPreset(BaseModel):
+    """A reusable training starting point with plain-language explanation."""
+
+    id: str
+    label: str
+    description: str = Field(..., description="What this preset is for")
+    values: dict[str, Any] = Field(..., description="TrainingConfigRequest overrides")
+
+
+class TrainingPresetListResponse(BaseModel):
+    presets: list[TrainingPreset]
+    count: int
 
 
 class LoRALibraryEntry(BaseModel):

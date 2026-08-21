@@ -9,6 +9,7 @@ from fastapi.responses import Response
 
 from app.core.config import settings
 from app.core.exceptions import ServiceError
+from app.core.jobs import Job, JobStore
 from app.core.paths import UnsafePathError
 from app.models.comfyui_schemas import JobResponse
 from app.models.lora_schemas import (
@@ -18,12 +19,14 @@ from app.models.lora_schemas import (
     CaptionUpdate,
     DatasetImageListResponse,
     DatasetImageResponse,
+    DatasetValidationResponse,
     LoRALibraryResponse,
     LoRAProjectCreate,
     LoRAProjectListResponse,
     LoRAProjectResponse,
     LoRAProjectUpdate,
     TrainingConfigRequest,
+    TrainingPresetListResponse,
     TrainingStatusResponse,
 )
 from app.services.lora_dataset_service import LoRAProject, LoRAProjectService
@@ -94,6 +97,15 @@ def toolkit_status(
 ) -> AIToolkitStatusResponse:
     """Whether Ostris AI Toolkit is configured and usable."""
     return AIToolkitStatusResponse(**service.status())
+
+
+@router.get("/training/presets", response_model=TrainingPresetListResponse)
+def training_presets(
+    service: LoRATrainingService = Depends(get_training_service),
+) -> TrainingPresetListResponse:
+    """Reusable training starting points with plain-language explanations."""
+    presets = service.presets()
+    return TrainingPresetListResponse(presets=presets, count=len(presets))
 
 
 # ============================================
@@ -258,6 +270,19 @@ def delete_image(
 # ============================================
 
 
+@router.get("/projects/{project_id}/validate", response_model=DatasetValidationResponse)
+def validate_dataset(
+    project_id: str,
+    service: LoRAProjectService = Depends(get_project_service),
+) -> DatasetValidationResponse:
+    """Quality-control report: duplicates, broken images, caption coverage, score."""
+    try:
+        report = service.validate_dataset(project_id)
+    except (ServiceError, UnsafePathError) as exc:
+        raise _http_error(exc) from exc
+    return DatasetValidationResponse(**report)
+
+
 @router.put("/projects/{project_id}/captions/{image_id}", response_model=DatasetImageResponse)
 def update_caption(
     project_id: str,
@@ -303,6 +328,59 @@ def generate_captions(
         skipped=skipped,
         model=payload.model or settings.vision_model,
     )
+
+
+@router.post("/projects/{project_id}/caption-jobs", response_model=JobResponse)
+def start_caption_job(
+    project_id: str,
+    payload: CaptionGenerateRequest | None = None,
+    request: Request = None,
+    service: LoRAProjectService = Depends(get_project_service),
+) -> JobResponse:
+    """Queue dataset captioning as a background job (for large datasets).
+
+    Progress and cancellation are visible in the unified job monitor; captions
+    land in the same .txt files as the synchronous path.
+    """
+    payload = payload or CaptionGenerateRequest()
+    store: JobStore = request.app.state.job_store
+    try:
+        # Fail fast on unknown projects / empty datasets before queuing.
+        service.get_project(project_id)
+        if not service.list_images(project_id):
+            raise ServiceError("This project has no images to caption",
+                               status_code=400)
+
+        def work(job: Job) -> None:
+            def progress(done: int, total: int) -> None:
+                store.update(job.id, progress=round(done / total * 100, 1),
+                             message=f"Captioned {done}/{total} images")
+
+            results = service.generate_captions_batch(
+                project_id,
+                progress_cb=progress,
+                cancel_check=lambda: store.is_cancelled(job.id),
+                model=payload.model,
+                overwrite=payload.overwrite,
+            )
+            generated = sum(1 for r in results if not r.get("skipped"))
+            store.update(
+                job.id,
+                outputs=[],
+                metadata={**job.metadata, "generated": generated,
+                          "skipped": len(results) - generated},
+                message=f"Captioned {generated} image(s)",
+            )
+
+        job = store.submit(
+            "dataset_captioning",
+            work,
+            metadata={"project_id": project_id, "model": payload.model
+                      or settings.vision_model},
+        )
+    except (ServiceError, UnsafePathError) as exc:
+        raise _http_error(exc) from exc
+    return JobResponse(**job.to_dict())
 
 
 # ============================================

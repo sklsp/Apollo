@@ -70,6 +70,9 @@ class JobResponse(BaseModel):
     created_at: str
     started_at: str | None = None
     completed_at: str | None = None
+    elapsed_seconds: float | None = Field(
+        None, description="Seconds from start to finish (or now, while running)"
+    )
     progress: float | None = None
     message: str | None = None
     error: str | None = None

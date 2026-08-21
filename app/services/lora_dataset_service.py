@@ -290,6 +290,21 @@ class LoRAProjectService:
             caption.strip(), encoding="utf-8"
         )
 
+    # ---------- dataset quality ----------
+
+    def validate_dataset(self, project_id: str) -> dict[str, Any]:
+        """Run quality control over this project's dataset.
+
+        Returns the report as a plain dict (see
+        :mod:`app.services.dataset_validation` for the shape).
+        """
+        from app.services.dataset_validation import validate_dataset
+
+        self.get_project(project_id)  # 404 for unknown projects
+        images = [vars(image) for image in self.list_images(project_id)]
+        report = validate_dataset(images, lambda image_id: self.read_image(project_id, image_id)[0])
+        return report.to_dict()
+
     # ---------- AI captions ----------
 
     def generate_captions(
@@ -361,6 +376,81 @@ class LoRAProjectService:
             len(results),
             vision_model,
         )
+        return results
+
+    def generate_captions_batch(
+        self,
+        project_id: str,
+        progress_cb: Any = None,
+        cancel_check: Any = None,
+        model: str | None = None,
+        overwrite: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Job-friendly variant of :meth:`generate_captions`.
+
+        Same behaviour, plus optional ``progress_cb(done, total)`` after each
+        image and cooperative cancellation via ``cancel_check() -> bool`` so
+        long runs can be watched and stopped from the job monitor instead of
+        blocking one HTTP request for minutes.
+        """
+        project = self.get_project(project_id)
+        vision_model = model or settings.vision_model
+        images = self.list_images(project_id)
+        if not images:
+            raise LoRAProjectError("This project has no images to caption")
+
+        prompt = CAPTION_PROMPT
+        if project.trigger_word:
+            prompt += (
+                f" The subject's identifier is '{project.trigger_word}'; do not "
+                "include it in the caption, it is added automatically."
+            )
+
+        results: list[dict[str, Any]] = []
+        for index, image in enumerate(images):
+            if cancel_check and cancel_check():
+                logger.info("[LORA] %s: captioning cancelled at %d/%d",
+                            project_id, index, len(images))
+                break
+
+            if image.caption_edited and not overwrite:
+                results.append(
+                    {
+                        "image_id": image.id,
+                        "caption": image.caption,
+                        "skipped": True,
+                        "reason": "manually edited",
+                    }
+                )
+                continue
+
+            content, _ = self.read_image(project_id, image.id)
+            encoded = base64.b64encode(content).decode("ascii")
+            try:
+                caption = self.ollama_client.generate_with_images(
+                    model=vision_model,
+                    prompt=prompt,
+                    images=[encoded],
+                    timeout=settings.vision_timeout,
+                )
+            except OllamaServiceError as exc:
+                logger.warning("[LORA] Caption failed for %s: %s", image.id, exc.detail)
+                results.append(
+                    {"image_id": image.id, "caption": image.caption,
+                     "skipped": True, "reason": exc.detail}
+                )
+                continue
+
+            caption = _clean_caption(caption)
+            if project.trigger_word and project.trigger_word.lower() not in caption.lower():
+                caption = f"{project.trigger_word}, {caption}"
+
+            self._write_caption_unmarked(project_id, image.id, caption)
+            results.append({"image_id": image.id, "caption": caption, "skipped": False})
+
+            if progress_cb:
+                progress_cb(index + 1, len(images))
+
         return results
 
     # ---------- trained LoRA library ----------
