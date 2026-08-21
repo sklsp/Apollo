@@ -259,3 +259,11 @@ ollama_data/
 build/
 dist/
 *.egg-info/
+
+# AI generation / LoRA training runtime data (large binaries, local state)
+data/loras/
+data/generated/
+data/jobs.json
+
+# Extra venvs
+.venv-1/

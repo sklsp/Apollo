@@ -32,7 +32,9 @@ def test_chat_endpoint_returns_response() -> None:
     response = client.post("/chat", json={"prompt": "hello"})
 
     assert response.status_code == 200
-    assert response.json()["response"] == "echo:hello"
+    # /chat assembles the system prompt, RAG context and history around the
+    # user's message, so the stub echoes the full assembled prompt.
+    assert "USER QUESTION:\nhello" in response.json()["response"]
 
 
 def test_models_endpoint_lists_models() -> None:

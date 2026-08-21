@@ -759,10 +759,399 @@
             font-size: 14px;
             animation: slideIn 0.3s ease-out;
         }
+
+        /* ============================================================
+           WORKSPACE NAV + AI GENERATION / LORA STUDIO VIEWS
+           Reuses the palette above: #0d0d0d page, #1a1a1a panels,
+           #2a2a2a borders, #10a37f accent, #4a9eff action.
+           ============================================================ */
+        .nav-rail {
+            width: 76px;
+            background: #141414;
+            border-right: 1px solid #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            width: 60px;
+            padding: 10px 4px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover { background: #222; color: #ececec; }
+        .nav-item.active { background: #1f2f2b; border-color: #10a37f; color: #10a37f; }
+        .nav-item-icon { font-size: 18px; line-height: 1; }
+
+        .nav-status {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px 0;
+            width: 100%;
+            align-items: center;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .nav-status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 9px;
+            color: #777;
+            width: 62px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #555;
+            flex-shrink: 0;
+        }
+        .status-dot.online { background: #10a37f; box-shadow: 0 0 6px #10a37f88; }
+        .status-dot.offline { background: #ff6b6b; }
+
+        .view { display: none; flex: 1; min-width: 0; }
+        .view.active { display: flex; }
+
+        .studio {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .studio-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #2a2a2a;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .studio-title { font-size: 18px; font-weight: 600; }
+
+        .studio-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .studio-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+        .studio-col.form { width: 380px; flex-shrink: 0; }
+        .studio-col.wide { flex: 1; }
+
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #999;
+            margin-bottom: 12px;
+        }
+
+        .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .field label { font-size: 12px; color: #b0b0b0; }
+        .field-row { display: flex; gap: 10px; }
+        .field-row .field { flex: 1; margin-bottom: 12px; }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            background: #0d0d0d;
+            color: #ececec;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus { outline: none; border-color: #10a37f; }
+        .field textarea { min-height: 72px; resize: vertical; }
+        .field-hint { font-size: 11px; color: #777; }
+
+        .btn {
+            padding: 9px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #10a37f;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover:not(:disabled) { background: #0d8a6f; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn.secondary { background: #2a2a2a; color: #ececec; }
+        .btn.secondary:hover:not(:disabled) { background: #333; }
+        .btn.danger { background: #3a2020; color: #ff6b6b; }
+        .btn.danger:hover:not(:disabled) { background: #4a2525; }
+        .btn.small { padding: 5px 10px; font-size: 11px; }
+        .btn.block { width: 100%; }
+
+        .service-banner {
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #4a3520;
+            background: #2a1f14;
+            color: #e0b070;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .service-banner.hidden { display: none; }
+        .service-banner code { color: #ffd39b; }
+
+        .tabs { display: flex; gap: 6px; }
+        .tab {
+            padding: 7px 14px;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            background: transparent;
+            color: #b0b0b0;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .tab:hover { background: #222; color: #ececec; }
+        .tab.active { background: #10a37f; border-color: #10a37f; color: #fff; font-weight: 600; }
+
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 12px;
+        }
+
+        .gallery img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+            display: block;
+            background: #0d0d0d;
+        }
+
+        .job-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            font-size: 13px;
+        }
+
+        .badge {
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .badge.queued { background: #3a3520; color: #e0c070; }
+        .badge.running { background: #1f2f3a; color: #4a9eff; }
+        .badge.completed { background: #1f2f2b; color: #10a37f; }
+        .badge.failed { background: #3a2020; color: #ff6b6b; }
+        .badge.cancelled { background: #2a2a2a; color: #999; }
+        .badge.not_started { background: #2a2a2a; color: #999; }
+
+        .progress-track {
+            height: 6px;
+            border-radius: 3px;
+            background: #2a2a2a;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #10a37f;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .progress-fill.indeterminate {
+            width: 40%;
+            animation: sweep 1.4s ease-in-out infinite;
+        }
+        @keyframes sweep {
+            0% { margin-left: -40%; }
+            100% { margin-left: 100%; }
+        }
+
+        .log-view {
+            background: #080808;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: "Cascadia Code", Consolas, monospace;
+            font-size: 11px;
+            line-height: 1.55;
+            color: #b0b0b0;
+            max-height: 320px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 11px 13px;
+            margin-bottom: 8px;
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .item-row:hover { border-color: #10a37f; }
+        .item-row.selected { border-color: #10a37f; background: #131c19; }
+        .item-main { min-width: 0; flex: 1; }
+        .item-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+        .item-meta { font-size: 11px; color: #777; }
+        .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .dataset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        .dataset-tile {
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .dataset-tile.edited { border-color: #10a37f; }
+        .dataset-tile img {
+            width: 100%;
+            height: 170px;
+            object-fit: cover;
+            display: block;
+            background: #000;
+        }
+        .dataset-tile-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .dataset-tile textarea {
+            width: 100%;
+            min-height: 66px;
+            padding: 7px 8px;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            background: #131313;
+            color: #ececec;
+            font-size: 11px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .dataset-tile-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .tile-name {
+            font-size: 10px;
+            color: #777;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            padding: 36px 20px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #2a2a2a;
+            border-radius: 10px;
+            padding: 26px;
+            text-align: center;
+            cursor: pointer;
+            color: #999;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .drop-zone:hover, .drop-zone.drag-over { border-color: #10a37f; background: #131c19; color: #ececec; }
+
+        .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 5px 0; }
+        .kv span:first-child { color: #999; }
+        .kv span:last-child { color: #ececec; text-align: right; word-break: break-all; }
+
+        @media (max-width: 1100px) {
+            .studio-body { flex-direction: column; }
+            .studio-col.form { width: 100%; }
+        }
     </style>
 </head>
 <body>
     <div class="dashboard">
+        <!-- WORKSPACE NAVIGATION -->
+        <nav class="nav-rail">
+            <button class="nav-item active" data-view="chat">
+                <span class="nav-item-icon">&#128172;</span><span>Chat</span>
+            </button>
+            <button class="nav-item" data-view="documents">
+                <span class="nav-item-icon">&#128196;</span><span>Docs</span>
+            </button>
+            <button class="nav-item" data-view="comfyui">
+                <span class="nav-item-icon">&#127912;</span><span>ComfyUI</span>
+            </button>
+            <button class="nav-item" data-view="lora">
+                <span class="nav-item-icon">&#129504;</span><span>LoRA</span>
+            </button>
+            <div class="nav-status">
+                <div class="nav-status-item"><span class="status-dot" data-status="ollama"></span>Ollama</div>
+                <div class="nav-status-item"><span class="status-dot" data-status="comfyui"></span>Comfy</div>
+                <div class="nav-status-item"><span class="status-dot" data-status="toolkit"></span>Toolkit</div>
+                <div class="nav-status-item"><span class="status-dot" data-status="rag"></span>RAG</div>
+            </div>
+        </nav>
+
+        <!-- ============ VIEW: CHAT (existing workspace, unchanged) ============ -->
+        <div class="view active" id="view-chat">
         <!-- LEFT SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -840,6 +1229,305 @@
                 <div class="prompts-section"></div>
             </div>
         </aside>
+        </div><!-- /view-chat -->
+
+        <!-- ============ VIEW: COMFYUI ============ -->
+        <div class="view" id="view-comfyui">
+            <div class="studio">
+                <div class="studio-header">
+                    <div class="studio-title">ComfyUI &mdash; Generate</div>
+                    <div class="chat-controls">
+                        <span id="comfy-conn" class="item-meta">Checking&hellip;</span>
+                        <button class="btn secondary small" id="comfy-test-btn">Test connection</button>
+                    </div>
+                </div>
+                <div class="studio-body">
+                    <div class="studio-col form">
+                        <div class="service-banner hidden" id="comfy-banner"></div>
+
+                        <div class="card">
+                            <div class="card-title">Generation</div>
+                            <div class="field">
+                                <label for="comfy-workflow">Workflow</label>
+                                <select id="comfy-workflow"></select>
+                                <div class="field-hint" id="comfy-workflow-desc"></div>
+                            </div>
+                            <div class="field">
+                                <label for="comfy-prompt">Prompt</label>
+                                <textarea id="comfy-prompt" placeholder="a portrait photo of a woman, soft window light"></textarea>
+                            </div>
+                            <div class="field">
+                                <label for="comfy-negative">Negative prompt</label>
+                                <textarea id="comfy-negative" placeholder="blurry, watermark, lowres">text, watermark, blurry, lowres</textarea>
+                            </div>
+                            <div class="field-row">
+                                <div class="field">
+                                    <label for="comfy-width">Width</label>
+                                    <input type="number" id="comfy-width" value="1024" min="64" max="4096" step="64" />
+                                </div>
+                                <div class="field">
+                                    <label for="comfy-height">Height</label>
+                                    <input type="number" id="comfy-height" value="1024" min="64" max="4096" step="64" />
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field">
+                                    <label for="comfy-steps">Steps</label>
+                                    <input type="number" id="comfy-steps" value="25" min="1" max="200" />
+                                </div>
+                                <div class="field">
+                                    <label for="comfy-cfg">CFG</label>
+                                    <input type="number" id="comfy-cfg" value="6" min="0" max="30" step="0.5" />
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label for="comfy-seed">Seed <span class="field-hint">(-1 = random)</span></label>
+                                <input type="number" id="comfy-seed" value="-1" />
+                            </div>
+                            <div class="field">
+                                <label for="comfy-checkpoint">Checkpoint</label>
+                                <select id="comfy-checkpoint"><option value="">Workflow default</option></select>
+                            </div>
+                            <button class="btn block" id="comfy-generate-btn">Generate</button>
+                        </div>
+
+                        <div class="card" id="comfy-lora-card">
+                            <div class="card-title">LoRA</div>
+                            <div class="field">
+                                <label for="comfy-lora">LoRA</label>
+                                <select id="comfy-lora"><option value="">None</option></select>
+                                <div class="field-hint">Select a workflow with a LoRA node to enable this.</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field">
+                                    <label for="comfy-lora-model">Strength (model)</label>
+                                    <input type="number" id="comfy-lora-model" value="1.0" min="-10" max="10" step="0.05" />
+                                </div>
+                                <div class="field">
+                                    <label for="comfy-lora-clip">Strength (CLIP)</label>
+                                    <input type="number" id="comfy-lora-clip" value="1.0" min="-10" max="10" step="0.05" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="studio-col wide">
+                        <div class="card">
+                            <div class="card-title">Current job</div>
+                            <div class="job-status" id="comfy-job">
+                                <span class="badge not_started">idle</span>
+                                <span>No generation running.</span>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Results</div>
+                            <div class="gallery" id="comfy-gallery"></div>
+                            <div class="empty-state" id="comfy-gallery-empty">Generated images appear here.</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Workflows</div>
+                            <div id="comfy-workflow-list"></div>
+                            <input type="file" id="comfy-import-input" accept=".json" style="display:none" />
+                            <button class="btn secondary small" id="comfy-import-btn">Import workflow JSON (API format)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /view-comfyui -->
+
+        <!-- ============ VIEW: LORA STUDIO ============ -->
+        <div class="view" id="view-lora">
+            <div class="studio">
+                <div class="studio-header">
+                    <div class="studio-title">LoRA Studio</div>
+                    <div class="tabs">
+                        <button class="tab active" data-panel="projects">Projects</button>
+                        <button class="tab" data-panel="dataset">Dataset</button>
+                        <button class="tab" data-panel="training">Training</button>
+                        <button class="tab" data-panel="library">Library</button>
+                    </div>
+                </div>
+                <div class="studio-body">
+                    <div class="studio-col wide" style="width:100%">
+                        <div class="service-banner hidden" id="lora-banner"></div>
+
+                        <!-- PROJECTS -->
+                        <div class="panel active" data-panel="projects">
+                            <div class="studio-body" style="padding:0">
+                                <div class="studio-col form">
+                                    <div class="card">
+                                        <div class="card-title">New LoRA project</div>
+                                        <div class="field">
+                                            <label for="lp-name">Name</label>
+                                            <input type="text" id="lp-name" placeholder="my_character" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="lp-desc">Description</label>
+                                            <input type="text" id="lp-desc" placeholder="Optional" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="lp-arch">Architecture</label>
+                                            <select id="lp-arch"></select>
+                                        </div>
+                                        <div class="field">
+                                            <label for="lp-base">Base model</label>
+                                            <input type="text" id="lp-base" placeholder="Leave empty for the architecture default" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="lp-trigger">Trigger word</label>
+                                            <input type="text" id="lp-trigger" placeholder="p3r5on" />
+                                        </div>
+                                        <button class="btn block" id="lp-create-btn">Create project</button>
+                                    </div>
+                                </div>
+                                <div class="studio-col wide">
+                                    <div class="card">
+                                        <div class="card-title">Projects</div>
+                                        <div id="lp-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DATASET -->
+                        <div class="panel" data-panel="dataset">
+                            <div class="card">
+                                <div class="card-title">Dataset &mdash; <span id="ds-project-name">no project selected</span></div>
+                                <div id="ds-controls" style="display:none">
+                                    <div class="field-row">
+                                        <div class="field">
+                                            <label for="ds-trigger">Trigger word</label>
+                                            <input type="text" id="ds-trigger" placeholder="p3r5on" />
+                                        </div>
+                                        <div class="field" style="justify-content:flex-end">
+                                            <label>&nbsp;</label>
+                                            <button class="btn secondary" id="ds-save-trigger">Save trigger word</button>
+                                        </div>
+                                    </div>
+                                    <div class="drop-zone" id="ds-drop">
+                                        Drag training images here, or click to browse<br />
+                                        <span class="field-hint">PNG, JPG, JPEG only</span>
+                                    </div>
+                                    <input type="file" id="ds-file-input" accept=".png,.jpg,.jpeg" multiple style="display:none" />
+                                    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                                        <button class="btn secondary" id="ds-caption-btn">Generate captions with AI</button>
+                                        <label class="toggle-label"><input type="checkbox" id="ds-overwrite" /> Overwrite my edits</label>
+                                        <button class="btn secondary small" id="ds-refresh">Refresh</button>
+                                    </div>
+                                    <div class="field-hint" id="ds-caption-hint" style="margin-top:8px"></div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">Images (<span id="ds-count">0</span>)</div>
+                                <div class="dataset-grid" id="ds-grid"></div>
+                                <div class="empty-state" id="ds-empty">Select a project and upload images.</div>
+                            </div>
+                        </div>
+
+                        <!-- TRAINING -->
+                        <div class="panel" data-panel="training">
+                            <div class="studio-body" style="padding:0">
+                                <div class="studio-col form">
+                                    <div class="card">
+                                        <div class="card-title">Training configuration</div>
+                                        <div class="field">
+                                            <label>Project</label>
+                                            <input type="text" id="tr-project" readonly placeholder="Select a project first" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="tr-arch">Architecture</label>
+                                            <select id="tr-arch"></select>
+                                        </div>
+                                        <div class="field">
+                                            <label for="tr-base">Base model</label>
+                                            <input type="text" id="tr-base" placeholder="Architecture default" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="tr-trigger">Trigger word</label>
+                                            <input type="text" id="tr-trigger" />
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field">
+                                                <label for="tr-steps">Steps</label>
+                                                <input type="number" id="tr-steps" value="2000" min="1" />
+                                            </div>
+                                            <div class="field">
+                                                <label for="tr-lr">Learning rate</label>
+                                                <input type="text" id="tr-lr" value="0.0001" />
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field">
+                                                <label for="tr-batch">Batch size</label>
+                                                <input type="number" id="tr-batch" value="1" min="1" max="64" />
+                                            </div>
+                                            <div class="field">
+                                                <label for="tr-res">Resolution</label>
+                                                <input type="text" id="tr-res" value="768,1024" />
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field">
+                                                <label for="tr-rank">LoRA rank</label>
+                                                <input type="number" id="tr-rank" value="16" min="1" max="512" />
+                                            </div>
+                                            <div class="field">
+                                                <label for="tr-alpha">LoRA alpha</label>
+                                                <input type="number" id="tr-alpha" value="16" min="1" max="512" />
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field">
+                                                <label for="tr-save">Save every</label>
+                                                <input type="number" id="tr-save" value="250" min="1" />
+                                            </div>
+                                            <div class="field">
+                                                <label for="tr-sample">Sample every <span class="field-hint">(0=off)</span></label>
+                                                <input type="number" id="tr-sample" value="0" min="0" />
+                                            </div>
+                                        </div>
+                                        <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                            <button class="btn" id="tr-start">Start training</button>
+                                            <button class="btn danger" id="tr-stop">Stop</button>
+                                            <button class="btn secondary" id="tr-preview">Preview config</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="studio-col wide">
+                                    <div class="card">
+                                        <div class="card-title">Progress</div>
+                                        <div class="job-status" id="tr-status" style="margin-bottom:12px">
+                                            <span class="badge not_started">not started</span><span>No training run yet.</span>
+                                        </div>
+                                        <div class="progress-track"><div class="progress-fill" id="tr-progress"></div></div>
+                                        <div class="kv" style="margin-top:10px"><span>Step</span><span id="tr-step">&mdash;</span></div>
+                                        <div class="kv"><span>Loss</span><span id="tr-loss">&mdash;</span></div>
+                                        <div class="kv"><span>Output</span><span id="tr-output">&mdash;</span></div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-title">Log</div>
+                                        <div class="log-view" id="tr-log">No log output yet.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LIBRARY -->
+                        <div class="panel" data-panel="library">
+                            <div class="card">
+                                <div class="card-title">
+                                    Trained LoRA library
+                                    <button class="btn secondary small" id="lib-refresh" style="float:right">Refresh</button>
+                                </div>
+                                <div id="lib-list"></div>
+                                <div class="empty-state" id="lib-empty">No LoRA files found yet.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div><!-- /view-lora -->
     </div>
 
     <script>
@@ -1479,6 +2167,751 @@
 
         // ============ STARTUP ============
         init();
+
+        // ============================================================
+        // AI GENERATION WORKSPACE (ComfyUI + LoRA Studio)
+        // Self-contained: shares only state.API_BASE and escapeHtml with
+        // the chat app above, so chat behaviour is unaffected.
+        // ============================================================
+        (function workspace() {
+            const API = () => state.API_BASE;
+            const $ = (sel) => document.querySelector(sel);
+            const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+            const ws = {
+                workflows: [],
+                comfy: { connected: false, loras: [], checkpoints: [] },
+                projects: [],
+                currentProjectId: null,
+                images: [],
+                archs: ["sdxl", "flux", "qwen_image", "krea2"],
+                genPoll: null,
+                trainPoll: null,
+                galleryFiles: []
+            };
+
+            // ---------- HTTP ----------
+            async function api(path, options = {}) {
+                const response = await fetch(`${API()}${path}`, options);
+                if (!response.ok) {
+                    let detail = `Request failed (${response.status})`;
+                    try {
+                        const body = await response.json();
+                        if (body && body.detail) detail = body.detail;
+                    } catch (_) { /* non-JSON error body */ }
+                    throw new Error(detail);
+                }
+                return response.status === 204 ? null : response.json();
+            }
+
+            const jsonPost = (path, body) => api(path, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            function notify(message, isError = true) {
+                showError(message);
+                if (!isError) console.info(message);
+            }
+
+            // ---------- navigation ----------
+            function switchView(view) {
+                const target = view === "documents" ? "chat" : view;
+                $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+                $$(".view").forEach(v => v.classList.toggle("active", v.id === `view-${target}`));
+
+                if (view === "documents") {
+                    const panel = document.querySelector(".right-panel");
+                    if (panel) panel.scrollTop = 0;
+                    const zone = DOM.uploadZone;
+                    if (zone) {
+                        zone.classList.add("drag-over");
+                        setTimeout(() => zone.classList.remove("drag-over"), 900);
+                    }
+                }
+                if (view === "comfyui") { refreshComfyStatus(); loadWorkflows(); }
+                if (view === "lora") { loadProjects(); loadLibrary(); loadToolkitStatus(); }
+            }
+
+            // ---------- system status ----------
+            function setDot(name, online) {
+                const dot = document.querySelector(`.status-dot[data-status="${name}"]`);
+                if (dot) dot.className = `status-dot ${online ? "online" : "offline"}`;
+            }
+
+            async function refreshSystemStatus() {
+                try {
+                    const health = await api("/health");
+                    setDot("ollama", !!health.ollama_reachable);
+                } catch (_) { setDot("ollama", false); }
+
+                try {
+                    const docs = await api("/documents");
+                    setDot("rag", docs.count > 0);
+                } catch (_) { setDot("rag", false); }
+
+                try {
+                    const status = await api("/comfyui/status");
+                    setDot("comfyui", status.connected);
+                } catch (_) { setDot("comfyui", false); }
+
+                try {
+                    const toolkit = await api("/loras/toolkit/status");
+                    setDot("toolkit", toolkit.configured);
+                } catch (_) { setDot("toolkit", false); }
+            }
+
+            // ---------- ComfyUI: status ----------
+            async function refreshComfyStatus() {
+                const label = $("#comfy-conn");
+                const banner = $("#comfy-banner");
+                try {
+                    const status = await api("/comfyui/status");
+                    ws.comfy = status;
+                    setDot("comfyui", status.connected);
+
+                    if (status.connected) {
+                        const gpu = (status.devices || [])[0];
+                        const vram = gpu && gpu.vram_free
+                            ? ` &middot; ${(gpu.vram_free / 1024 ** 3).toFixed(1)} GB VRAM free` : "";
+                        label.innerHTML = `<span class="status-dot online" style="display:inline-block"></span> Connected &mdash; v${escapeHtml(status.version || "?")}${vram}`;
+                        banner.classList.add("hidden");
+                        fillSelect($("#comfy-checkpoint"), status.checkpoints, "Workflow default");
+                        fillSelect($("#comfy-lora"), status.loras, "None");
+                    } else {
+                        label.innerHTML = `<span class="status-dot offline" style="display:inline-block"></span> Disconnected`;
+                        banner.classList.remove("hidden");
+                        banner.innerHTML = `<strong>ComfyUI unavailable.</strong> Not reachable at <code>${escapeHtml(status.base_url)}</code>. Start ComfyUI, then press &ldquo;Test connection&rdquo;.`;
+                    }
+                } catch (error) {
+                    setDot("comfyui", false);
+                    label.textContent = "Status unavailable";
+                    banner.classList.remove("hidden");
+                    banner.textContent = error.message;
+                }
+            }
+
+            function fillSelect(select, values, emptyLabel) {
+                if (!select) return;
+                const previous = select.value;
+                select.innerHTML = "";
+                const blank = document.createElement("option");
+                blank.value = "";
+                blank.textContent = emptyLabel;
+                select.appendChild(blank);
+                (values || []).forEach(value => {
+                    const option = document.createElement("option");
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+                if (previous && (values || []).includes(previous)) select.value = previous;
+            }
+
+            // ---------- ComfyUI: workflows ----------
+            async function loadWorkflows() {
+                try {
+                    const data = await api("/comfyui/workflows");
+                    ws.workflows = data.workflows;
+                } catch (error) {
+                    notify(`Could not load workflows: ${error.message}`);
+                    return;
+                }
+
+                const select = $("#comfy-workflow");
+                const previous = select.value;
+                select.innerHTML = "";
+                ws.workflows.forEach(workflow => {
+                    const option = document.createElement("option");
+                    option.value = workflow.id;
+                    option.textContent = workflow.name;
+                    select.appendChild(option);
+                });
+                if (previous) select.value = previous;
+                onWorkflowChange();
+
+                const list = $("#comfy-workflow-list");
+                list.innerHTML = "";
+                ws.workflows.forEach(workflow => {
+                    const row = document.createElement("div");
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div class="item-main">
+                            <div class="item-name">${escapeHtml(workflow.name)}</div>
+                            <div class="item-meta">${workflow.node_count} nodes &middot; ${escapeHtml(workflow.arch)} &middot; ${workflow.supported_inputs.join(", ") || "no mapped inputs"}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn danger small" data-delete="${escapeHtml(workflow.id)}">Delete</button>
+                        </div>`;
+                    list.appendChild(row);
+                });
+                list.querySelectorAll("[data-delete]").forEach(button => {
+                    button.addEventListener("click", async () => {
+                        if (!confirm(`Delete workflow "${button.dataset.delete}"?`)) return;
+                        try {
+                            await api(`/comfyui/workflows/${button.dataset.delete}`, { method: "DELETE" });
+                            loadWorkflows();
+                        } catch (error) { notify(error.message); }
+                    });
+                });
+            }
+
+            function currentWorkflow() {
+                return ws.workflows.find(w => w.id === $("#comfy-workflow").value);
+            }
+
+            function onWorkflowChange() {
+                const workflow = currentWorkflow();
+                const supported = workflow ? workflow.supported_inputs : [];
+                $("#comfy-workflow-desc").textContent = workflow ? workflow.description : "";
+
+                // Only offer controls this workflow actually maps.
+                const gate = (id, key) => {
+                    const input = $(id);
+                    if (!input) return;
+                    const ok = supported.includes(key);
+                    input.disabled = !ok;
+                    input.style.opacity = ok ? "1" : "0.45";
+                };
+                gate("#comfy-negative", "negative_prompt");
+                gate("#comfy-width", "width");
+                gate("#comfy-height", "height");
+                gate("#comfy-steps", "steps");
+                gate("#comfy-cfg", "cfg");
+                gate("#comfy-seed", "seed");
+                gate("#comfy-checkpoint", "checkpoint");
+                gate("#comfy-lora", "lora_name");
+                gate("#comfy-lora-model", "lora_strength_model");
+                gate("#comfy-lora-clip", "lora_strength_clip");
+                $("#comfy-lora-card").style.opacity = supported.includes("lora_name") ? "1" : "0.5";
+            }
+
+            // ---------- ComfyUI: generate ----------
+            function numberOrNull(id) {
+                const input = $(id);
+                if (!input || input.disabled || input.value === "") return null;
+                const value = Number(input.value);
+                return Number.isFinite(value) ? value : null;
+            }
+
+            async function generate() {
+                const workflow = currentWorkflow();
+                if (!workflow) { notify("Select a workflow first."); return; }
+
+                const supported = workflow.supported_inputs;
+                const body = { workflow_id: workflow.id };
+                const put = (key, value) => {
+                    if (value !== null && value !== "" && supported.includes(key)) body[key] = value;
+                };
+                put("prompt", $("#comfy-prompt").value.trim());
+                put("negative_prompt", $("#comfy-negative").value.trim());
+                put("width", numberOrNull("#comfy-width"));
+                put("height", numberOrNull("#comfy-height"));
+                put("steps", numberOrNull("#comfy-steps"));
+                put("cfg", numberOrNull("#comfy-cfg"));
+                put("checkpoint", $("#comfy-checkpoint").value);
+                put("lora_name", $("#comfy-lora").value);
+                if (body.lora_name) {
+                    put("lora_strength_model", numberOrNull("#comfy-lora-model"));
+                    put("lora_strength_clip", numberOrNull("#comfy-lora-clip"));
+                }
+                const seed = numberOrNull("#comfy-seed");
+                if (seed !== null && seed >= 0 && supported.includes("seed")) body.seed = seed;
+
+                $("#comfy-generate-btn").disabled = true;
+                try {
+                    const job = await jsonPost("/comfyui/generate", body);
+                    renderJob(job);
+                    pollGeneration(job.id);
+                } catch (error) {
+                    notify(error.message);
+                    $("#comfy-generate-btn").disabled = false;
+                }
+            }
+
+            function renderJob(job) {
+                const status = job.status || "queued";
+                $("#comfy-job").innerHTML =
+                    `<span class="badge ${status}">${status}</span>
+                     <span>${escapeHtml(job.message || job.error || "Waiting for ComfyUI…")}</span>`;
+            }
+
+            function pollGeneration(jobId) {
+                clearInterval(ws.genPoll);
+                ws.genPoll = setInterval(async () => {
+                    let job;
+                    try {
+                        job = await api(`/comfyui/jobs/${jobId}`);
+                    } catch (error) {
+                        clearInterval(ws.genPoll);
+                        $("#comfy-generate-btn").disabled = false;
+                        notify(error.message);
+                        return;
+                    }
+                    renderJob(job);
+                    if (["completed", "failed", "cancelled"].includes(job.status)) {
+                        clearInterval(ws.genPoll);
+                        $("#comfy-generate-btn").disabled = false;
+                        if (job.status === "completed") addToGallery(job.outputs || []);
+                        else if (job.error) notify(job.error);
+                    }
+                }, 1500);
+            }
+
+            function addToGallery(filenames) {
+                ws.galleryFiles = filenames.concat(ws.galleryFiles).slice(0, 40);
+                const gallery = $("#comfy-gallery");
+                gallery.innerHTML = "";
+                ws.galleryFiles.forEach(filename => {
+                    const image = document.createElement("img");
+                    image.src = `${API()}/comfyui/images/${encodeURIComponent(filename)}`;
+                    image.alt = filename;
+                    image.loading = "lazy";
+                    gallery.appendChild(image);
+                });
+                $("#comfy-gallery-empty").style.display = ws.galleryFiles.length ? "none" : "block";
+            }
+
+            async function importWorkflow(file) {
+                let parsed;
+                try {
+                    parsed = JSON.parse(await file.text());
+                } catch (_) {
+                    notify("That file is not valid JSON.");
+                    return;
+                }
+                const name = prompt("Name for this workflow:", file.name.replace(/\.json$/i, ""));
+                if (!name) return;
+                try {
+                    await jsonPost("/comfyui/workflows", { name, workflow: parsed, description: "Imported from ComfyUI" });
+                    loadWorkflows();
+                } catch (error) { notify(error.message); }
+            }
+
+            // ---------- LoRA: toolkit + projects ----------
+            async function loadToolkitStatus() {
+                const banner = $("#lora-banner");
+                try {
+                    const toolkit = await api("/loras/toolkit/status");
+                    setDot("toolkit", toolkit.configured);
+                    if (toolkit.supported_archs && toolkit.supported_archs.length) {
+                        ws.archs = toolkit.supported_archs;
+                        fillArchSelects();
+                    }
+                    if (toolkit.configured) {
+                        banner.classList.add("hidden");
+                    } else {
+                        banner.classList.remove("hidden");
+                        banner.innerHTML = `<strong>Ostris AI Toolkit is not configured.</strong> Datasets and captions still work; training is disabled. Set <code>AI_TOOLKIT_PATH</code> and <code>AI_TOOLKIT_PYTHON</code> in your <code>.env</code>, then restart.`;
+                    }
+                } catch (error) {
+                    setDot("toolkit", false);
+                    banner.classList.remove("hidden");
+                    banner.textContent = error.message;
+                }
+            }
+
+            function fillArchSelects() {
+                ["#lp-arch", "#tr-arch"].forEach(selector => {
+                    const select = $(selector);
+                    if (!select) return;
+                    const previous = select.value;
+                    select.innerHTML = "";
+                    ws.archs.forEach(arch => {
+                        const option = document.createElement("option");
+                        option.value = arch;
+                        option.textContent = arch;
+                        select.appendChild(option);
+                    });
+                    if (previous) select.value = previous;
+                });
+            }
+
+            async function loadProjects() {
+                try {
+                    const data = await api("/loras/projects");
+                    ws.projects = data.projects;
+                } catch (error) { notify(error.message); return; }
+
+                const list = $("#lp-list");
+                list.innerHTML = "";
+                if (!ws.projects.length) {
+                    list.innerHTML = `<div class="empty-state">No LoRA projects yet. Create one on the left.</div>`;
+                    return;
+                }
+                ws.projects.forEach(project => {
+                    const row = document.createElement("div");
+                    row.className = "item-row" + (project.id === ws.currentProjectId ? " selected" : "");
+                    row.innerHTML = `
+                        <div class="item-main">
+                            <div class="item-name">${escapeHtml(project.name)}
+                                <span class="badge ${project.training_status}">${escapeHtml(project.training_status)}</span></div>
+                            <div class="item-meta">${project.image_count} images &middot; ${project.captioned_count} captioned &middot; ${escapeHtml(project.arch)}${project.trigger_word ? " &middot; trigger: " + escapeHtml(project.trigger_word) : ""}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn small" data-open="${escapeHtml(project.id)}">Open</button>
+                            <button class="btn danger small" data-del="${escapeHtml(project.id)}">Delete</button>
+                        </div>`;
+                    list.appendChild(row);
+                });
+
+                list.querySelectorAll("[data-open]").forEach(button =>
+                    button.addEventListener("click", () => selectProject(button.dataset.open)));
+                list.querySelectorAll("[data-del]").forEach(button =>
+                    button.addEventListener("click", async () => {
+                        if (!confirm("Delete this project and its dataset from disk?")) return;
+                        try {
+                            await api(`/loras/projects/${button.dataset.del}`, { method: "DELETE" });
+                            if (ws.currentProjectId === button.dataset.del) ws.currentProjectId = null;
+                            loadProjects(); loadLibrary();
+                        } catch (error) { notify(error.message); }
+                    }));
+            }
+
+            function activeProject() {
+                return ws.projects.find(p => p.id === ws.currentProjectId);
+            }
+
+            async function selectProject(projectId) {
+                ws.currentProjectId = projectId;
+                await loadProjects();
+                const project = activeProject();
+                if (!project) return;
+
+                $("#ds-project-name").textContent = project.name;
+                $("#ds-controls").style.display = "block";
+                $("#ds-trigger").value = project.trigger_word || "";
+                $("#tr-project").value = project.name;
+                $("#tr-arch").value = project.arch;
+                $("#tr-base").value = project.base_model || "";
+                $("#tr-trigger").value = project.trigger_word || "";
+
+                await loadImages();
+                await refreshTraining();
+                switchPanel("dataset");
+            }
+
+            async function createProject() {
+                const name = $("#lp-name").value.trim();
+                if (!name) { notify("Give the project a name."); return; }
+                try {
+                    const project = await jsonPost("/loras/projects", {
+                        name,
+                        description: $("#lp-desc").value.trim(),
+                        arch: $("#lp-arch").value,
+                        base_model: $("#lp-base").value.trim() || null,
+                        trigger_word: $("#lp-trigger").value.trim()
+                    });
+                    $("#lp-name").value = ""; $("#lp-desc").value = ""; $("#lp-trigger").value = "";
+                    await loadProjects();
+                    selectProject(project.id);
+                } catch (error) { notify(error.message); }
+            }
+
+            // ---------- LoRA: dataset ----------
+            async function loadImages() {
+                if (!ws.currentProjectId) return;
+                try {
+                    const data = await api(`/loras/projects/${ws.currentProjectId}/images`);
+                    ws.images = data.images;
+                } catch (error) { notify(error.message); return; }
+
+                const grid = $("#ds-grid");
+                grid.innerHTML = "";
+                $("#ds-count").textContent = ws.images.length;
+                $("#ds-empty").style.display = ws.images.length ? "none" : "block";
+
+                ws.images.forEach(image => {
+                    const tile = document.createElement("div");
+                    tile.className = "dataset-tile" + (image.caption_edited ? " edited" : "");
+                    tile.innerHTML = `
+                        <img src="${API()}${image.url}" alt="${escapeHtml(image.filename)}" loading="lazy" />
+                        <div class="dataset-tile-body">
+                            <textarea data-caption="${escapeHtml(image.id)}" placeholder="Caption for training…">${escapeHtml(image.caption)}</textarea>
+                            <div class="dataset-tile-footer">
+                                <span class="tile-name" title="${escapeHtml(image.filename)}">${escapeHtml(image.filename)}</span>
+                                <span style="display:flex;gap:6px">
+                                    <button class="btn small" data-save="${escapeHtml(image.id)}">Save</button>
+                                    <button class="btn danger small" data-rm="${escapeHtml(image.id)}">&times;</button>
+                                </span>
+                            </div>
+                        </div>`;
+                    grid.appendChild(tile);
+                });
+
+                grid.querySelectorAll("[data-save]").forEach(button =>
+                    button.addEventListener("click", async () => {
+                        const id = button.dataset.save;
+                        const text = grid.querySelector(`[data-caption="${CSS.escape(id)}"]`).value;
+                        try {
+                            await api(`/loras/projects/${ws.currentProjectId}/captions/${id}`, {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ caption: text })
+                            });
+                            button.textContent = "Saved";
+                            setTimeout(() => { button.textContent = "Save"; loadImages(); }, 700);
+                        } catch (error) { notify(error.message); }
+                    }));
+
+                grid.querySelectorAll("[data-rm]").forEach(button =>
+                    button.addEventListener("click", async () => {
+                        if (!confirm("Remove this image and its caption?")) return;
+                        try {
+                            await api(`/loras/projects/${ws.currentProjectId}/images/${button.dataset.rm}`, { method: "DELETE" });
+                            loadImages(); loadProjects();
+                        } catch (error) { notify(error.message); }
+                    }));
+            }
+
+            async function uploadImages(files) {
+                if (!ws.currentProjectId) { notify("Select a project first."); return; }
+                const form = new FormData();
+                Array.from(files).forEach(file => form.append("files", file));
+                try {
+                    await api(`/loras/projects/${ws.currentProjectId}/images`, { method: "POST", body: form });
+                    await loadImages();
+                    loadProjects();
+                } catch (error) { notify(error.message); }
+            }
+
+            async function generateCaptions() {
+                if (!ws.currentProjectId) { notify("Select a project first."); return; }
+                const button = $("#ds-caption-btn");
+                button.disabled = true;
+                button.textContent = "Captioning…";
+                $("#ds-caption-hint").textContent = "Running the local vision model. This can take a while for large datasets.";
+                try {
+                    const result = await jsonPost(`/loras/projects/${ws.currentProjectId}/generate-captions`, {
+                        overwrite: $("#ds-overwrite").checked
+                    });
+                    $("#ds-caption-hint").textContent =
+                        `Generated ${result.generated}, skipped ${result.skipped} (model: ${result.model}). Review and edit before training.`;
+                    await loadImages();
+                    loadProjects();
+                } catch (error) {
+                    $("#ds-caption-hint").textContent = "";
+                    notify(`Caption generation failed: ${error.message}`);
+                } finally {
+                    button.disabled = false;
+                    button.textContent = "Generate captions with AI";
+                }
+            }
+
+            // ---------- LoRA: training ----------
+            function trainingBody() {
+                const resolution = $("#tr-res").value.split(",")
+                    .map(part => parseInt(part.trim(), 10)).filter(Number.isFinite);
+                return {
+                    arch: $("#tr-arch").value,
+                    base_model: $("#tr-base").value.trim() || null,
+                    trigger_word: $("#tr-trigger").value.trim(),
+                    steps: parseInt($("#tr-steps").value, 10) || 2000,
+                    learning_rate: parseFloat($("#tr-lr").value) || 0.0001,
+                    batch_size: parseInt($("#tr-batch").value, 10) || 1,
+                    resolution: resolution.length ? resolution : null,
+                    lora_rank: parseInt($("#tr-rank").value, 10) || 16,
+                    lora_alpha: parseInt($("#tr-alpha").value, 10) || 16,
+                    save_every: parseInt($("#tr-save").value, 10) || 250,
+                    sample_every: parseInt($("#tr-sample").value, 10) || 0
+                };
+            }
+
+            async function startTraining() {
+                if (!ws.currentProjectId) { notify("Select a project first."); return; }
+                try {
+                    await jsonPost(`/loras/projects/${ws.currentProjectId}/train`, trainingBody());
+                    refreshTraining();
+                    pollTraining();
+                } catch (error) { notify(error.message); }
+            }
+
+            async function stopTraining() {
+                if (!ws.currentProjectId) return;
+                try {
+                    await jsonPost(`/loras/projects/${ws.currentProjectId}/stop`, {});
+                    refreshTraining();
+                } catch (error) { notify(error.message); }
+            }
+
+            async function previewConfig() {
+                if (!ws.currentProjectId) { notify("Select a project first."); return; }
+                try {
+                    const result = await jsonPost(`/loras/projects/${ws.currentProjectId}/config`, trainingBody());
+                    $("#tr-log").textContent = result.config;
+                } catch (error) { notify(error.message); }
+            }
+
+            async function refreshTraining() {
+                if (!ws.currentProjectId) return;
+                let status;
+                try {
+                    status = await api(`/loras/projects/${ws.currentProjectId}/training`);
+                } catch (_) { return; }
+
+                $("#tr-status").innerHTML =
+                    `<span class="badge ${status.status}">${escapeHtml(status.status)}</span>
+                     <span>${escapeHtml(status.message || "")}${status.error ? " &mdash; " + escapeHtml(status.error) : ""}</span>`;
+
+                const bar = $("#tr-progress");
+                if (status.progress !== null && status.progress !== undefined) {
+                    bar.classList.remove("indeterminate");
+                    bar.style.width = `${status.progress}%`;
+                } else if (status.running) {
+                    // Progress genuinely unknown - animate rather than invent a number.
+                    bar.classList.add("indeterminate");
+                } else {
+                    bar.classList.remove("indeterminate");
+                    bar.style.width = "0%";
+                }
+
+                $("#tr-step").textContent = status.total_steps
+                    ? `${status.current_step} / ${status.total_steps}` : "—";
+                $("#tr-loss").textContent = status.loss !== null && status.loss !== undefined
+                    ? status.loss.toFixed(4) : "—";
+                $("#tr-output").textContent = status.trained_lora_path || "—";
+
+                try {
+                    const logData = await api(`/loras/projects/${ws.currentProjectId}/training/log?lines=200`);
+                    if (logData.log) {
+                        const view = $("#tr-log");
+                        view.textContent = logData.log;
+                        view.scrollTop = view.scrollHeight;
+                    }
+                } catch (_) { /* log is optional */ }
+
+                if (!status.running) { clearInterval(ws.trainPoll); ws.trainPoll = null; loadProjects(); loadLibrary(); }
+            }
+
+            function pollTraining() {
+                clearInterval(ws.trainPoll);
+                ws.trainPoll = setInterval(refreshTraining, 3000);
+            }
+
+            // ---------- LoRA: library ----------
+            async function loadLibrary() {
+                let data;
+                try {
+                    data = await api("/loras");
+                } catch (error) { notify(error.message); return; }
+
+                const list = $("#lib-list");
+                list.innerHTML = "";
+                $("#lib-empty").style.display = data.count ? "none" : "block";
+
+                data.loras.forEach(lora => {
+                    const row = document.createElement("div");
+                    row.className = "item-row";
+                    const size = (lora.size_bytes / 1024 / 1024).toFixed(1);
+                    const created = new Date(lora.created_at).toLocaleDateString();
+                    row.innerHTML = `
+                        <div class="item-main">
+                            <div class="item-name">${escapeHtml(lora.name)}
+                                <span class="badge ${lora.training_status}">${escapeHtml(lora.source)}</span></div>
+                            <div class="item-meta">${size} MB &middot; ${created}${lora.project_name ? " &middot; " + escapeHtml(lora.project_name) : ""}${lora.trigger_word ? " &middot; trigger: " + escapeHtml(lora.trigger_word) : ""}${lora.arch ? " &middot; " + escapeHtml(lora.arch) : ""}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn small" data-use="${escapeHtml(lora.filename)}" data-trigger="${escapeHtml(lora.trigger_word || "")}">Use in ComfyUI</button>
+                            ${lora.project_id ? `<button class="btn secondary small" data-proj="${escapeHtml(lora.project_id)}">Open project</button>` : ""}
+                        </div>`;
+                    list.appendChild(row);
+                });
+
+                list.querySelectorAll("[data-use]").forEach(button =>
+                    button.addEventListener("click", () => useLoraInComfy(button.dataset.use, button.dataset.trigger)));
+                list.querySelectorAll("[data-proj]").forEach(button =>
+                    button.addEventListener("click", () => selectProject(button.dataset.proj)));
+            }
+
+            async function useLoraInComfy(filename, triggerWord) {
+                switchView("comfyui");
+                await refreshComfyStatus();
+                await loadWorkflows();
+
+                // Prefer a workflow that actually has a LoRA node.
+                const loraWorkflow = ws.workflows.find(w => w.supported_inputs.includes("lora_name"));
+                if (loraWorkflow) {
+                    $("#comfy-workflow").value = loraWorkflow.id;
+                    onWorkflowChange();
+                }
+
+                const select = $("#comfy-lora");
+                if (!Array.from(select.options).some(option => option.value === filename)) {
+                    const option = document.createElement("option");
+                    option.value = filename;
+                    option.textContent = `${filename} (not yet visible to ComfyUI)`;
+                    select.appendChild(option);
+                    notify(`"${filename}" is not in ComfyUI's loras folder yet. Copy it there, or point COMFYUI_LORA_DIR at it, then restart ComfyUI.`);
+                }
+                select.value = filename;
+                if (triggerWord && !$("#comfy-prompt").value.includes(triggerWord)) {
+                    $("#comfy-prompt").value = `${triggerWord}, ${$("#comfy-prompt").value}`.trim();
+                }
+            }
+
+            // ---------- tabs ----------
+            function switchPanel(name) {
+                $$("#view-lora .tab").forEach(tab => tab.classList.toggle("active", tab.dataset.panel === name));
+                $$("#view-lora .panel").forEach(panel => panel.classList.toggle("active", panel.dataset.panel === name));
+                if (name === "library") loadLibrary();
+                if (name === "training") refreshTraining();
+            }
+
+            // ---------- wiring ----------
+            $$(".nav-item").forEach(button =>
+                button.addEventListener("click", () => switchView(button.dataset.view)));
+            $$("#view-lora .tab").forEach(tab =>
+                tab.addEventListener("click", () => switchPanel(tab.dataset.panel)));
+
+            $("#comfy-test-btn").addEventListener("click", refreshComfyStatus);
+            $("#comfy-workflow").addEventListener("change", onWorkflowChange);
+            $("#comfy-generate-btn").addEventListener("click", generate);
+            $("#comfy-import-btn").addEventListener("click", () => $("#comfy-import-input").click());
+            $("#comfy-import-input").addEventListener("change", event => {
+                if (event.target.files.length) importWorkflow(event.target.files[0]);
+                event.target.value = "";
+            });
+
+            $("#lp-create-btn").addEventListener("click", createProject);
+            $("#ds-refresh").addEventListener("click", () => { loadImages(); loadProjects(); });
+            $("#ds-caption-btn").addEventListener("click", generateCaptions);
+            $("#ds-save-trigger").addEventListener("click", async () => {
+                if (!ws.currentProjectId) return;
+                try {
+                    await api(`/loras/projects/${ws.currentProjectId}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ trigger_word: $("#ds-trigger").value.trim() })
+                    });
+                    $("#tr-trigger").value = $("#ds-trigger").value.trim();
+                    loadProjects();
+                } catch (error) { notify(error.message); }
+            });
+
+            const drop = $("#ds-drop");
+            drop.addEventListener("click", () => $("#ds-file-input").click());
+            drop.addEventListener("dragover", event => { event.preventDefault(); drop.classList.add("drag-over"); });
+            drop.addEventListener("dragleave", () => drop.classList.remove("drag-over"));
+            drop.addEventListener("drop", event => {
+                event.preventDefault();
+                drop.classList.remove("drag-over");
+                if (event.dataTransfer.files.length) uploadImages(event.dataTransfer.files);
+            });
+            $("#ds-file-input").addEventListener("change", event => {
+                if (event.target.files.length) uploadImages(event.target.files);
+                event.target.value = "";
+            });
+
+            $("#tr-start").addEventListener("click", startTraining);
+            $("#tr-stop").addEventListener("click", stopTraining);
+            $("#tr-preview").addEventListener("click", previewConfig);
+            $("#lib-refresh").addEventListener("click", loadLibrary);
+
+            fillArchSelects();
+            refreshSystemStatus();
+            setInterval(refreshSystemStatus, 30000);
+        })();
     </script>
 </body>
 </html>

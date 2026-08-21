@@ -13,10 +13,19 @@ class OllamaClient:
         self.base_url = (base_url or settings.ollama_base_url).rstrip("/")
         self.timeout = timeout or settings.request_timeout
 
-    def _request(self, method: str, path: str, *, json: dict | None = None) -> dict:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        json: dict | None = None,
+        timeout: float | None = None,
+    ) -> dict:
         url = f"{self.base_url}{path}"
         try:
-            response = requests.request(method=method, url=url, json=json, timeout=self.timeout)
+            response = requests.request(
+                method=method, url=url, json=json, timeout=timeout or self.timeout
+            )
         except requests.RequestException as exc:
             raise OllamaServiceError("Ollama is unreachable", status_code=503, detail=str(exc)) from exc
 
@@ -68,6 +77,37 @@ class OllamaClient:
     def list_models(self) -> dict:
         """List available models using OpenAI-compatible endpoint."""
         return self._request("GET", "/v1/models")
+
+    def generate_with_images(
+        self,
+        *,
+        model: str,
+        prompt: str,
+        images: list[str],
+        timeout: float | None = None,
+    ) -> str:
+        """Prompt a vision model with base64 images via Ollama's /api/generate.
+
+        Used for LoRA dataset captioning. Kept on the native endpoint because
+        it takes bare base64, with no data-URI wrapping.
+        """
+        payload = self._request(
+            "POST",
+            "/api/generate",
+            json={
+                "model": model,
+                "prompt": prompt,
+                "images": images,
+                "stream": False,
+            },
+            timeout=timeout,
+        )
+        response = payload.get("response")
+        if not isinstance(response, str):
+            raise OllamaServiceError(
+                "Ollama returned an invalid vision response", status_code=502
+            )
+        return response.strip()
 
     def embed(self, *, model: str, inputs: list[str]) -> list[list[float]]:
         """Generate embeddings via Ollama's /api/embed endpoint."""

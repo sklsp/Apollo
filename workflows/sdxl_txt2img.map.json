@@ -1,0 +1,39 @@
+{
+  "name": "SDXL Text to Image",
+  "description": "Plain SDXL text-to-image. No LoRA required \u2014 works as soon as ComfyUI is up.",
+  "arch": "sdxl",
+  "inputs": {
+    "prompt": {
+      "node": "6",
+      "field": "text"
+    },
+    "negative_prompt": {
+      "node": "7",
+      "field": "text"
+    },
+    "seed": {
+      "node": "3",
+      "field": "seed"
+    },
+    "steps": {
+      "node": "3",
+      "field": "steps"
+    },
+    "cfg": {
+      "node": "3",
+      "field": "cfg"
+    },
+    "width": {
+      "node": "5",
+      "field": "width"
+    },
+    "height": {
+      "node": "5",
+      "field": "height"
+    },
+    "checkpoint": {
+      "node": "4",
+      "field": "ckpt_name"
+    }
+  }
+}

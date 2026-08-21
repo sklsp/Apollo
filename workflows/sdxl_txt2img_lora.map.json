@@ -1,0 +1,51 @@
+{
+  "name": "SDXL Text to Image + LoRA",
+  "description": "SDXL text-to-image with a LoraLoader. Pick a LoRA from the library; leaving it empty sets both strengths to 0, which is a no-op.",
+  "arch": "sdxl",
+  "inputs": {
+    "prompt": {
+      "node": "6",
+      "field": "text"
+    },
+    "negative_prompt": {
+      "node": "7",
+      "field": "text"
+    },
+    "seed": {
+      "node": "3",
+      "field": "seed"
+    },
+    "steps": {
+      "node": "3",
+      "field": "steps"
+    },
+    "cfg": {
+      "node": "3",
+      "field": "cfg"
+    },
+    "width": {
+      "node": "5",
+      "field": "width"
+    },
+    "height": {
+      "node": "5",
+      "field": "height"
+    },
+    "checkpoint": {
+      "node": "4",
+      "field": "ckpt_name"
+    },
+    "lora_name": {
+      "node": "10",
+      "field": "lora_name"
+    },
+    "lora_strength_model": {
+      "node": "10",
+      "field": "strength_model"
+    },
+    "lora_strength_clip": {
+      "node": "10",
+      "field": "strength_clip"
+    }
+  }
+}

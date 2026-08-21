@@ -1,15 +1,30 @@
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+from app.api.comfyui_routes import jobs_router
+from app.api.comfyui_routes import router as comfyui_router
+from app.api.lora_routes import router as lora_router
 from app.api.routes import router
+from app.core.config import settings
+from app.core.jobs import JobStore
+from app.services.comfyui_service import ComfyUIService
 from app.services.document_service import DocumentService
 from app.services.llm_service import LLMService
+from app.services.lora_dataset_service import LoRAProjectService
+from app.services.lora_training_service import LoRATrainingService
 from app.services.memory_service import MemoryService
 from app.services.prompt_service import PromptService
 from app.services.rag.service import RAGService
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+)
 
 
 def _iter_api_routes(routes):
@@ -23,15 +38,22 @@ def _iter_api_routes(routes):
             yield route
 
 
-def create_app() -> FastAPI:
+def create_app(service: object | None = None) -> FastAPI:
     """Create and configure the FastAPI application.
 
-    Initializes all services (LLM, Memory, Document, Prompt).
+    Initializes all services (LLM, Memory, Document, Prompt, ComfyUI, LoRA).
+
+    Args:
+        service: Optional LLM service override, for tests that want to stub
+            Ollama without a live server.
     """
     app = FastAPI(
         title="Local AI Agent API",
-        version="1.0.0",
-        description="Production-ready AI workspace with chat memory, document RAG, and prompt templates",
+        version="2.0.0",
+        description=(
+            "Local AI workspace: chat memory, document RAG, prompt templates, "
+            "ComfyUI generation, and Ostris AI Toolkit LoRA training"
+        ),
     )
 
     # ============ CORS MIDDLEWARE ============
@@ -45,14 +67,33 @@ def create_app() -> FastAPI:
     )
 
     # ============ INITIALIZE SERVICES ============
-    app.state.llm_service = LLMService()
+    app.state.llm_service = service or LLMService()
     app.state.memory_service = MemoryService()
     app.state.document_service = DocumentService()
     app.state.prompt_service = PromptService()
     app.state.rag_service = RAGService()
 
+    # ---- AI generation / LoRA training (independent of the document stack) ----
+    # Constructed eagerly but connect lazily: neither ComfyUI nor AI Toolkit
+    # needs to be running for the app to boot or for chat/RAG to work.
+    app.state.job_store = JobStore(persist_path=settings.jobs_file)
+    app.state.comfyui_service = ComfyUIService(jobs=app.state.job_store)
+    app.state.lora_project_service = LoRAProjectService()
+    app.state.lora_training_service = LoRATrainingService(
+        projects=app.state.lora_project_service,
+        jobs=app.state.job_store,
+    )
+
     # ============ INCLUDE API ROUTES ============
     app.include_router(router)
+    app.include_router(comfyui_router)
+    app.include_router(lora_router)
+    app.include_router(jobs_router)
+
+    @app.on_event("shutdown")
+    async def _shutdown() -> None:
+        """Stop worker threads so a reload does not leave jobs running."""
+        app.state.job_store.shutdown()
 
     # ============ FRONTEND - SERVE AT ROOT ============
     frontend_path = Path(__file__).parent / "frontend" / "index.html"
