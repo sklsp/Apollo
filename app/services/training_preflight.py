@@ -67,7 +67,8 @@ class PreflightReport:
 
     @property
     def can_proceed(self) -> bool:
-        return self.verdict != "blocked"
+        """False only when starting would certainly fail (no GPU, no disk)."""
+        return self.verdict not in ("blocked", "unsupported")
 
     def to_dict(self) -> dict[str, Any]:
         return {

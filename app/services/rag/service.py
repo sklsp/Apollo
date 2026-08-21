@@ -218,17 +218,17 @@ class RAGService:
                 persist_dir=self.persist_dir,
                 embedding_model=self.embedding_client.model,
             )
-        except IndexIncompatibleError as exc:
-            # Model/dimension changed: refuse to mix embeddings. The failed
-            # load raised before quarantining, so move the old files aside and
-            # start clean rather than serving garbage results.
-            logger.warning("[RAG] Stored index incompatible: %s", exc)
+        except IndexIncompatibleError:
+            # Model/dimension changed: refuse to mix embeddings. Quarantine
+            # the old files and start clean rather than serving garbage.
+            logger.warning("[RAG] Stored index incompatible; quarantining")
             self._quarantine_files()
             self._store = VectorStore(
                 dimension,
                 persist_dir=self.persist_dir,
                 embedding_model=self.embedding_client.model,
             )
+            self.index_rebuilt = True
 
         # Derive per-document version records from chunk metadata so
         # incremental indexing works across restarts.
