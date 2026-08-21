@@ -6,6 +6,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
+from app.core.config import settings
 from app.core.exceptions import OllamaServiceError
 from app.models.schemas import (
     ChatMessage,
@@ -72,7 +73,30 @@ def health(service: LLMService = Depends(get_llm_service)) -> HealthResponse:
     try:
         payload = service.health_check()
     except OllamaServiceError as exc:
-        raise exc.to_http_exception() from exc
+        # A structured 503 with setup guidance, not a bare error — the UI
+        # renders this as an actionable card rather than a dead endpoint.
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={
+                "message": "Ollama is not reachable.",
+                "url_checked": service.client.base_url,
+                "expected_model": settings.default_model,
+                "how_to_fix": [
+                    "Install Ollama from https://ollama.com if it is not installed.",
+                    f"Start it with: ollama serve (listening on {service.client.base_url})",
+                    "Pull a chat model with: ollama pull llama3.2",
+                    "Pull an embedding model with: ollama pull nomic-embed-text",
+                ],
+                "unavailable_features": [
+                    "Chat", "RAG document Q&A", "AI dataset captioning",
+                ],
+                "working_features": [
+                    "ComfyUI image generation", "Dataset management",
+                    "Dataset validation", "LoRA training",
+                ],
+                "raw_detail": exc.detail,
+            },
+        ) from exc
     return HealthResponse(**payload)
 
 
@@ -84,6 +108,18 @@ def list_models(service: LLMService = Depends(get_llm_service)) -> ModelsRespons
     except OllamaServiceError as exc:
         raise exc.to_http_exception() from exc
     return ModelsResponse(models=model_names)
+
+
+@router.get("/rag/status")
+def rag_status(
+    rag_service: RAGService = Depends(get_rag_service),
+) -> dict:
+    """Developer view of the vector index: what is indexed, with which model.
+
+    Exposes retrieval metadata (content hashes, chunk counts, embedding model)
+    but never raw document text.
+    """
+    return rag_service.status()
 
 
 # ============================================

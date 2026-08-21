@@ -1512,8 +1512,15 @@
                                         </div>
                                         <div style="display:flex;gap:8px;flex-wrap:wrap">
                                             <button class="btn" id="tr-start">Start training</button>
+                                            <button class="btn secondary" id="tr-preflight">Check before training</button>
                                             <button class="btn danger" id="tr-stop">Stop</button>
                                             <button class="btn secondary" id="tr-preview">Preview config</button>
+                                        </div>
+                                        <div id="tr-preflight-report" style="display:none;margin-top:12px;padding:12px;border:1px solid #333;border-radius:8px;font-size:13px;line-height:1.7">
+                                            <div style="font-weight:600;margin-bottom:6px">Training preflight — <span id="trpf-verdict"></span></div>
+                                            <div id="trpf-summary" style="margin-bottom:8px"></div>
+                                            <ul id="trpf-checks" style="margin:0;padding-left:18px"></ul>
+                                            <ul id="trpf-recs" style="margin:8px 0 0 18px;padding:0;color:#d9b96a"></ul>
                                         </div>
                                     </div>
                                 </div>
@@ -2223,9 +2230,15 @@
                     let detail = `Request failed (${response.status})`;
                     try {
                         const body = await response.json();
-                        if (body && body.detail) detail = body.detail;
+                        if (body && body.detail !== undefined) detail = body.detail;
                     } catch (_) { /* non-JSON error body */ }
-                    throw new Error(detail);
+                    // Structured details ride along; message stays readable.
+                    const error = new Error(
+                        typeof detail === "string" ? detail : (detail && detail.message) || detail
+                    );
+                    error.detail = detail;
+                    error.status = response.status;
+                    throw error;
                 }
                 return response.status === 204 ? null : response.json();
             }
@@ -2270,7 +2283,10 @@
                 try {
                     const health = await api("/health");
                     setDot("ollama", !!health.ollama_reachable);
-                } catch (_) { setDot("ollama", false); }
+                } catch (error) {
+                    setDot("ollama", false);
+                    showOllamaGuidance(error);
+                }
 
                 try {
                     const docs = await api("/documents");
@@ -2286,6 +2302,31 @@
                     const toolkit = await api("/loras/toolkit/status");
                     setDot("toolkit", toolkit.configured);
                 } catch (_) { setDot("toolkit", false); }
+            }
+
+            // Rendered once per session when Ollama is down: explains what is
+            // unavailable, what still works, and how to fix it.
+            let ollamaBannerShown = false;
+            function showOllamaGuidance(error) {
+                if (ollamaBannerShown) return;
+                ollamaBannerShown = true;
+                const detail = error && error.detail;
+                const banner = document.createElement("div");
+                banner.className = "banner";
+                banner.style.cssText = "margin:12px;padding:14px;border:1px solid #7a5c20;background:#2a2313;border-radius:8px;font-size:13px;line-height:1.6";
+                const steps = (detail && detail.how_to_fix) || [];
+                const unavailable = (detail && detail.unavailable_features) || ["Chat", "RAG"];
+                const working = (detail && detail.working_features) || [];
+                banner.innerHTML = `
+                    <strong>⚠ Ollama is not running.</strong>
+                    <div style="margin-top:6px">Checked: <code>${escapeHtml((detail && detail.url_checked) || "http://localhost:11434")}</code>
+                    · expected model: <code>${escapeHtml((detail && detail.expected_model) || "llama3.2")}</code></div>
+                    <div style="margin-top:8px"><strong>Unavailable until it runs:</strong> ${escapeHtml(unavailable.join(", "))}</div>
+                    ${working.length ? `<div><strong>Still working:</strong> ${escapeHtml(working.join(", "))}</div>` : ""}
+                    ${steps.length ? `<div style="margin-top:8px"><strong>To fix:</strong><ol style="margin:4px 0 0 18px;padding:0">${steps.map(s => `<li><code>${escapeHtml(s)}</code></li>`).join("")}</ol></div>` : ""}
+                    <button class="btn secondary small" style="margin-top:10px" onclick="this.parentElement.remove()">Dismiss</button>`;
+                const nav = document.querySelector(".status-dots") || document.body;
+                nav.parentElement.insertBefore(banner, nav.parentElement.firstChild);
             }
 
             // ---------- ComfyUI: status ----------
@@ -2885,6 +2926,55 @@
                 } catch (error) { notify(error.message); }
             }
 
+            // ---------- LoRA: preflight ----------
+            const VERDICT_STYLE = {
+                ok:        ["✓ Likely safe", "#3fa66a"],
+                heavy:     ["⚠ Potentially heavy", "#d9b96a"],
+                risky:     ["⚠ High risk", "#d97b4a"],
+                unsupported: ["✗ Not supported here", "#d95c5c"],
+                blocked:   ["✗ Blocked", "#d95c5c"],
+            };
+
+            async function runPreflight() {
+                if (!ws.currentProjectId) { notify("Select a project first."); return; }
+                const report_box = $("#tr-preflight-report");
+                report_box.style.display = "block";
+                $("#trpf-verdict").textContent = "checking…";
+                $("#trpf-checks").innerHTML = "";
+                $("#trpf-recs").innerHTML = "";
+                try {
+                    const report = await jsonPost(
+                        `/loras/projects/${ws.currentProjectId}/preflight`, trainingBody());
+                    const [label, color] = VERDICT_STYLE[report.verdict] || [report.verdict, "#ccc"];
+                    $("#trpf-verdict").textContent = label;
+                    $("#trpf-verdict").style.color = color;
+                    $("#trpf-summary").textContent = report.summary || "";
+
+                    const checks = $("#trpf-checks");
+                    checks.innerHTML = "";
+                    (report.checks || []).forEach(check => {
+                        const li = document.createElement("li");
+                        const icon = check.severity === "error" ? "✗"
+                            : check.severity === "warning" ? "⚠" : "✓";
+                        li.textContent = `${icon} ${check.name}: ${check.detail}`;
+                        if (check.severity === "error") li.style.color = "#d95c5c";
+                        else if (check.severity === "warning") li.style.color = "#d9b96a";
+                        checks.appendChild(li);
+                    });
+
+                    const recs = $("#trpf-recs");
+                    recs.innerHTML = "";
+                    (report.recommendations || []).forEach(rec => {
+                        const li = document.createElement("li");
+                        li.textContent = rec;
+                        recs.appendChild(li);
+                    });
+                } catch (error) {
+                    report_box.style.display = "none";
+                    notify(error.message);
+                }
+            }
+
             async function refreshTraining() {
                 if (!ws.currentProjectId) return;
                 let status;
@@ -3060,6 +3150,7 @@
             $("#tr-start").addEventListener("click", startTraining);
             $("#tr-stop").addEventListener("click", stopTraining);
             $("#tr-preview").addEventListener("click", previewConfig);
+            $("#tr-preflight").addEventListener("click", runPreflight);
             $("#lib-refresh").addEventListener("click", loadLibrary);
 
             fillArchSelects();

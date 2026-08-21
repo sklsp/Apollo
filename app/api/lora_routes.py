@@ -108,6 +108,45 @@ def training_presets(
     return TrainingPresetListResponse(presets=presets, count=len(presets))
 
 
+@router.get("/training/hardware-presets")
+def hardware_presets(
+    service: LoRATrainingService = Depends(get_training_service),
+) -> dict:
+    """Preset variants (conservative/balanced/quality) for the detected GPU."""
+    return service.hardware_presets()
+
+
+@router.get("/hardware")
+def hardware_info(
+    service: LoRATrainingService = Depends(get_training_service),
+) -> dict:
+    """What this machine can run: GPU, VRAM, RAM, disk."""
+    from app.core.config import settings as app_settings
+
+    from app.services.hardware import detect_hardware
+
+    return detect_hardware(
+        comfyui_base_url=app_settings.comfyui_base_url
+    ).to_dict()
+
+
+@router.post("/projects/{project_id}/preflight")
+def training_preflight(
+    project_id: str,
+    payload: TrainingConfigRequest,
+    service: LoRATrainingService = Depends(get_training_service),
+) -> dict:
+    """Dry-run validation of a training config against this machine.
+
+    Never starts training. Returns per-check results plus an honest verdict
+    (ok / heavy / risky / unsupported / blocked) and recommendations.
+    """
+    try:
+        return service.preflight(project_id, payload.model_dump(exclude_none=True))
+    except (ServiceError, UnsafePathError) as exc:
+        raise _http_error(exc) from exc
+
+
 # ============================================
 # PROJECTS
 # ============================================

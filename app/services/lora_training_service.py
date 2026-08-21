@@ -436,6 +436,98 @@ class LoRATrainingService:
             for preset_id, preset in TRAINING_PRESETS.items()
         ]
 
+    def hardware_presets(self) -> dict[str, Any]:
+        """Preset variants tuned to the detected GPU's VRAM tier.
+
+        Every preset keeps its identity; only the resource-heavy knobs
+        (resolution, batch size, rank) scale with the machine. Returns
+        ``None``-tier info when no GPU is detected so the UI can explain why.
+        """
+        from app.services.hardware import detect_hardware
+
+        hardware = detect_hardware(comfyui_base_url=settings.comfyui_base_url)
+        vram = hardware.vram_total_mb
+
+        if vram is None:
+            tiers: dict[str, Any] = {
+                "vram_mb": None,
+                "tier": "unknown",
+                "note": "No GPU detected — showing conservative defaults.",
+            }
+        elif vram <= 8 * 1024:
+            tiers = {"vram_mb": vram, "tier": "small",
+                     "note": f"{vram // 1024} GB GPU — conservative settings."}
+        elif vram <= 16 * 1024:
+            tiers = {"vram_mb": vram, "tier": "medium",
+                     "note": f"{vram // 1024} GB GPU — balanced settings."}
+        else:
+            tiers = {"vram_mb": vram, "tier": "large",
+                     "note": f"{vram // 1024} GB GPU — quality settings available."}
+
+        variants: dict[str, dict[str, Any]] = {}
+        for preset_id, preset in TRAINING_PRESETS.items():
+            base = dict(preset["values"])
+            small = {**base,
+                     "resolution": sorted({r for r in base.get("resolution", [512]) if r <= 512}) or [512],
+                     "batch_size": 1,
+                     "lora_rank": min(base.get("lora_rank", 16), 16)}
+            medium = {**base, "batch_size": 1}
+            large = {**base,
+                     "batch_size": max(base.get("batch_size", 1), 2),
+                     "lora_rank": min(base.get("lora_rank", 16) * 2, 64)}
+            variants[preset_id] = {
+                "label": preset["label"],
+                "conservative": small,
+                "balanced": medium,
+                "quality": large,
+            }
+
+        return {"hardware": tiers, "presets": variants}
+
+    def preflight(self, project_id: str, options: dict[str, Any]) -> dict[str, Any]:
+        """Check a training configuration against this machine before starting.
+
+        Never starts anything; returns the structured report for the UI.
+        """
+        from app.services.hardware import detect_hardware
+        from app.services.training_preflight import advise
+
+        # Dataset checks first — they are cheap and independent of hardware.
+        checks: list[dict[str, Any]] = []
+        try:
+            images = self.projects.list_images(project_id)
+        except Exception as exc:  # noqa: BLE001 - unknown project etc.
+            raise LoRAProjectError(str(exc), status_code=404) from exc
+
+        checks.append({
+            "name": "Dataset", "passed": bool(images),
+            "detail": f"{len(images)} image(s)" if images else "No images uploaded",
+            "severity": "error" if not images else "info",
+        })
+
+        captioned = sum(1 for image in images if image.caption.strip())
+        checks.append({
+            "name": "Captions",
+            "passed": captioned > 0,
+            "detail": f"{captioned}/{len(images)} captioned",
+            "severity": "error" if captioned == 0 else (
+                "warning" if captioned < len(images) else "info"),
+        })
+
+        base_model = options.get("base_model") or self.projects.get_project(
+            project_id).base_model
+        checks.append({
+            "name": "Base model",
+            "passed": bool(base_model),
+            "detail": base_model or "Not set",
+            "severity": "info" if base_model else "warning",
+        })
+
+        report = advise(options, detect_hardware(comfyui_base_url=settings.comfyui_base_url))
+        report_dict = report.to_dict()
+        report_dict["checks"] = checks + report_dict["checks"]
+        return report_dict
+
     # ---------- config ----------
 
     def write_config(self, project_id: str, options: dict[str, Any]) -> Path:
@@ -554,10 +646,13 @@ class LoRATrainingService:
 
         if exit_code != 0:
             self.projects.update_project(project_id, training_status="failed")
+            last_line = trainer.snapshot()["last_line"] or "See training.log for details."
+            from app.services.training_preflight import diagnose_failure
+            diagnosis = diagnose_failure(last_line)
             raise AIToolkitError(
-                f"AI Toolkit exited with code {exit_code}",
+                f"AI Toolkit exited with code {exit_code}: {diagnosis['explanation']}",
                 status_code=500,
-                detail=trainer.snapshot()["last_line"] or "See training.log for details.",
+                detail=f"{diagnosis['recommendation']} | Raw: {diagnosis['raw']}",
             )
 
         lora_path = self.find_trained_lora(project_id)
