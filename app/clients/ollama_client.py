@@ -32,6 +32,15 @@ class OllamaClient:
         # Convert all client/server errors from Ollama to 502 Bad Gateway
         # Never return 4xx status codes as that confuses clients about endpoint availability
         if response.status_code == 404:
+            # Ollama returns 404 both for unknown routes AND for "model not
+            # found" — distinguish them so the message points at the real fix.
+            detail = _extract_ollama_error(response)
+            if "not found, try pulling" in detail:
+                raise OllamaServiceError(
+                    f"Ollama model not available: {path}",
+                    status_code=502,
+                    detail=detail,
+                )
             raise OllamaServiceError(
                 f"Ollama endpoint not found: {path}",
                 status_code=502,
@@ -133,3 +142,14 @@ class OllamaClient:
                 return [vector]
 
         raise OllamaServiceError("Ollama returned an invalid embedding response", status_code=502)
+
+
+def _extract_ollama_error(response: requests.Response) -> str:
+    """Best-effort human-readable error out of an Ollama error response."""
+    try:
+        body = response.json()
+    except ValueError:
+        return response.text[:300]
+    if isinstance(body, dict) and body.get("error"):
+        return str(body["error"])[:300]
+    return response.text[:300]

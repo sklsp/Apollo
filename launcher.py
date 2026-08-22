@@ -134,20 +134,148 @@ def _announce_public_url(url: str) -> None:
     _url_announced.set()
 
 
-def _wait_for_backend(timeout: float = 45.0) -> bool:
-    """Poll /health until the FastAPI server is ready."""
-    deadline = time.monotonic() + timeout
-    health_url = f"http://127.0.0.1:{PORT}/health"
-    print(f"Waiting for FastAPI at {health_url} ...", flush=True)
-    while time.monotonic() < deadline and not _shutdown.is_set():
+class StartupResult:
+    """Outcome of the backend startup wait, with diagnostics on failure."""
+
+    def __init__(self) -> None:
+        self.ok = False
+        self.last_url: str | None = None
+        self.last_status: int | None = None
+        self.last_body: str | None = None
+        self.last_error: str | None = None
+        self.dependency_warnings: list[str] = []
+
+
+def _http_probe(url: str, timeout: float = 3.0) -> tuple[int | None, str | None, str | None]:
+    """GET a URL. Returns (status, body, error); exactly one of status/error is set."""
+    try:
+        request = urllib.request.Request(url, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.status, response.read(2048).decode("utf-8", "replace"), None
+    except urllib.error.HTTPError as exc:
         try:
-            with urllib.request.urlopen(health_url, timeout=2) as response:
-                if response.status == 200:
-                    print("FastAPI is ready.\n", flush=True)
-                    return True
-        except (urllib.error.URLError, TimeoutError, OSError):
-            time.sleep(0.5)
-    return False
+            body = exc.read(2048).decode("utf-8", "replace")
+        except OSError:
+            body = None
+        return exc.code, body, None
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        return None, None, str(exc.reason or exc)
+
+
+def _wait_for_backend(timeout: float = 45.0) -> StartupResult:
+    """Wait until the API process is responding, then report dependency state.
+
+    Readiness semantics:
+
+    * **/live** decides startup success — it only means "the HTTP server is
+      up". Optional dependencies (Ollama etc.) being down must NOT fail the
+      launch, so any HTTP response (including 503 from /health) counts as the
+      process being alive.
+    * **/health** is then probed once to *report* dependency warnings without
+      influencing the outcome.
+
+    Addresses are tried in order: explicit loopback first (Windows can resolve
+    ``localhost`` to IPv6, which uvicorn on 0.0.0.0 may not answer), then the
+    hostname as a fallback.
+    """
+    result = StartupResult()
+    deadline = time.monotonic() + timeout
+    candidate_hosts = ["127.0.0.1", "localhost"]
+
+    print(f"Waiting for the Apollo API on port {PORT} ...", flush=True)
+
+    while time.monotonic() < deadline and not _shutdown.is_set():
+        for host in candidate_hosts:
+            live_url = f"http://{host}:{PORT}/live"
+            result.last_url = live_url
+            status, body, error = _http_probe(live_url)
+            if status is not None:
+                # Any HTTP response proves the server process is up.
+                result.ok = True
+                result.last_status = status
+                result.last_body = body
+                result.last_error = None
+                print(f"API is responding at http://{host}:{PORT} (HTTP {status}).",
+                      flush=True)
+
+                # Dependency report: informational only.
+                health_status, health_body, _ = _http_probe(
+                    f"http://{host}:{PORT}/health")
+                if health_status is not None and health_status != 200:
+                    result.dependency_warnings.append(
+                        f"/health returned HTTP {health_status}: "
+                        f"{(health_body or '')[:200]}"
+                    )
+                return result
+            result.last_error = error
+
+        time.sleep(0.5)
+
+    return result
+
+
+def _report_startup_failure(result: StartupResult) -> None:
+    """Print an actionable diagnosis instead of a bare timeout message."""
+    proc_alive = _processes and _processes[0].poll() is None
+
+    print("\n" + "=" * 70, flush=True)
+    print("  APOLLO STARTUP FAILED", flush=True)
+    print("=" * 70, flush=True)
+    print(f"\n  API process: {'RUNNING' if proc_alive else 'EXITED'}", flush=True)
+    print(f"  Healthcheck URL: {result.last_url}", flush=True)
+
+    if result.last_status is not None:
+        print(f"  Last HTTP status: {result.last_status}", flush=True)
+        if result.last_body:
+            print(f"  Response: {result.last_body[:300]}", flush=True)
+
+    if result.last_error:
+        print(f"\n  Last connection error:\n    {result.last_error}", flush=True)
+
+    if proc_alive and result.last_error:
+        print(
+            "\n  The API process is running but not accepting connections yet.\n"
+            "  Common causes:\n"
+            f"    - Another process already holds port {PORT}\n"
+            "      (check with: netstat -ano | findstr "
+            f"\":{PORT}.*LISTENING\")\n"
+            "    - The app failed during import/startup — see [api] output above\n"
+            "    - Slow first start (embedding model download)",
+            flush=True,
+        )
+    elif not proc_alive:
+        print(
+            "\n  The API process exited during startup — see the [api] output\n"
+            "  above for the traceback.",
+            flush=True,
+        )
+
+    if result.dependency_warnings:
+        print("\n  Dependency warnings (do NOT block startup):", flush=True)
+        for warning in result.dependency_warnings:
+            print(f"    - {warning}", flush=True)
+
+    print("=" * 70 + "\n", flush=True)
+
+
+def _check_port_available() -> bool:
+    """Fail fast with a clear message when something else owns our port."""
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(1)
+        if sock.connect_ex(("127.0.0.1", PORT)) == 0:
+            print(
+                f"\nERROR: Port {PORT} is already in use.\n"
+                f"Another Apollo instance (or another app) is listening on it.\n"
+                f"Find it with:   netstat -ano | findstr \":{PORT}.*LISTENING\"\n"
+                f"Stop it with:   taskkill /F /PID <pid>\n"
+                f"Or use another port:  set PORT=8010 && python launcher.py\n",
+                file=sys.stderr,
+                flush=True,
+            )
+            return False
+    return True
 
 
 def _start_uvicorn() -> subprocess.Popen[str]:
@@ -251,6 +379,9 @@ def main() -> int:
     signal.signal(signal.SIGTERM, _shutdown_all)
     atexit.register(_shutdown_all)
 
+    if not _check_port_available():
+        return 1
+
     try:
         cloudflared = _resolve_cloudflared()
     except FileNotFoundError as exc:
@@ -258,10 +389,18 @@ def main() -> int:
         return 1
 
     uvicorn_proc = _start_uvicorn()
-    if not _wait_for_backend():
-        print("ERROR: FastAPI did not become ready in time.", file=sys.stderr)
+    startup = _wait_for_backend()
+    if not startup.ok:
+        _report_startup_failure(startup)
         _shutdown_all()
         return 1
+
+    if startup.dependency_warnings:
+        print("  Dependency status (the API is up; these are optional):", flush=True)
+        for warning in startup.dependency_warnings:
+            print(f"    - {warning}", flush=True)
+        print(f"  Dashboard: http://localhost:{PORT}  (degraded features are "
+              f"marked in the UI)\n", flush=True)
 
     _start_tunnel(cloudflared)
 

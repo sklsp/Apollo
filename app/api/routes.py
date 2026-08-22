@@ -67,6 +67,44 @@ def get_rag_service(request: Request) -> RAGService:
 # ============================================
 
 
+@router.get("/live")
+def live() -> dict:
+    """Process liveness probe: the HTTP server is up and responding.
+
+    Deliberately dependency-free — Ollama/ComfyUI/AI Toolkit being down does
+    not make the API "not started". The launcher uses this to decide whether
+    startup succeeded; `/health` reports dependency state separately.
+    """
+    return {"status": "alive"}
+
+
+@router.get("/ready")
+def ready(
+    llm_service: LLMService = Depends(get_llm_service),
+) -> dict:
+    """Readiness probe: process up AND core dependencies reachable.
+
+    Returns 200 only when Ollama answers. Intended for orchestrators that
+    should not route traffic to a half-working instance; the local launcher
+    deliberately uses `/live` instead so an offline Ollama never blocks
+    startup.
+    """
+    try:
+        llm_service.list_models()
+    except OllamaServiceError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "degraded",
+                "reason": "Ollama is unreachable",
+                "url": getattr(getattr(llm_service, "client", None), "base_url",
+                               settings.ollama_base_url),
+                "detail": exc.detail,
+            },
+        ) from exc
+    return {"status": "ready"}
+
+
 @router.get("/health", response_model=HealthResponse)
 def health(service: LLMService = Depends(get_llm_service)) -> HealthResponse:
     """Check service health and Ollama connectivity."""
