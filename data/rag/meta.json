@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "embedding_model": "nomic-embed-text",
+  "dimension": 384,
+  "vector_count": 6,
+  "updated_at": 1787357523.9367168
+}

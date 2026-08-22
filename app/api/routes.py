@@ -75,15 +75,17 @@ def health(service: LLMService = Depends(get_llm_service)) -> HealthResponse:
     except OllamaServiceError as exc:
         # A structured 503 with setup guidance, not a bare error — the UI
         # renders this as an actionable card rather than a dead endpoint.
+        base_url = getattr(getattr(service, "client", None), "base_url",
+                           settings.ollama_base_url)
         raise HTTPException(
             status_code=exc.status_code,
             detail={
                 "message": "Ollama is not reachable.",
-                "url_checked": service.client.base_url,
+                "url_checked": base_url,
                 "expected_model": settings.default_model,
                 "how_to_fix": [
                     "Install Ollama from https://ollama.com if it is not installed.",
-                    f"Start it with: ollama serve (listening on {service.client.base_url})",
+                    f"Start it with: ollama serve (listening on {base_url})",
                     "Pull a chat model with: ollama pull llama3.2",
                     "Pull an embedding model with: ollama pull nomic-embed-text",
                 ],
@@ -120,6 +122,39 @@ def rag_status(
     but never raw document text.
     """
     return rag_service.status()
+
+
+@router.get("/rag/debug-query")
+def rag_debug_query(
+    q: str,
+    top_k: int = 4,
+    rag_service: RAGService = Depends(get_rag_service),
+) -> dict:
+    """Developer view of one retrieval: query → chunks → scores → context.
+
+    Shows exactly what the model would see for this question. Not used by the
+    normal chat flow — it exists to explain why an answer came out the way it
+    did.
+    """
+    if not q.strip():
+        raise HTTPException(status_code=400, detail="Query 'q' is required")
+    return rag_service.query_debug(q.strip(), top_k=max(1, min(top_k, 20)))
+
+
+@router.get("/dashboard")
+def dashboard(request: Request) -> dict:
+    """Unified workspace overview: counts, recent activity, system health."""
+    from app.services.dashboard import build_dashboard
+
+    state = request.app.state
+    return build_dashboard(
+        document_service=state.document_service,
+        rag_service=state.rag_service,
+        project_service=state.lora_project_service,
+        training_service=state.lora_training_service,
+        comfyui_service=state.comfyui_service,
+        job_store=state.job_store,
+    )
 
 
 # ============================================

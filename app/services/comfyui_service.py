@@ -380,6 +380,7 @@ class ComfyUIService:
                     )
                 if record.get("outputs"):
                     saved = self._save_outputs(job.id, record["outputs"])
+                    self._write_provenance(job, saved)
                     self.jobs.update(
                         job.id,
                         outputs=saved,
@@ -432,7 +433,154 @@ class ComfyUIService:
             raise WorkflowError(f"Image '{filename}' not found", status_code=404)
         return path.read_bytes()
 
+    # ---------- provenance ----------
+
+    def _write_provenance(self, job: Job, saved_files: list[str]) -> None:
+        """Write a sidecar .json next to each generated image.
+
+        Records everything needed to answer "how was this made?": workflow,
+        prompt, seed, LoRA and strengths, checkpoint, timestamp. One file per
+        image so deleting an image (future feature) can take its record along.
+        """
+        meta = job.metadata or {}
+        base_record = {
+            "job_id": job.id,
+            "workflow_id": meta.get("workflow_id"),
+            "prompt": meta.get("prompt", ""),
+            "seed": meta.get("seed"),
+            "lora_name": meta.get("lora_name"),
+            "lora_strength_model": meta.get("lora_strength_model"),
+            "lora_strength_clip": meta.get("lora_strength_clip"),
+            "checkpoint": meta.get("checkpoint"),
+            "created_at": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()),
+        }
+        for filename in saved_files:
+            record = {**base_record, "image": filename}
+            sidecar = self.output_dir / f"{Path(filename).stem}.provenance.json"
+            try:
+                write_json_atomic(sidecar, record)
+            except OSError as exc:
+                logger.warning("[COMFYUI] Could not write provenance for %s: %s",
+                               filename, exc)
+
+    def list_generated(self, limit: int = 50) -> list[dict[str, Any]]:
+        """Recent generated images with their provenance records attached."""
+        entries: list[dict[str, Any]] = []
+        images = sorted(
+            (p for p in self.output_dir.iterdir()
+             if p.suffix.lower() in (".png", ".jpg", ".jpeg") and p.is_file()),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for path in images[:limit]:
+            entry: dict[str, Any] = {
+                "filename": path.name,
+                "url": f"/comfyui/images/{path.name}",
+                "size_bytes": path.stat().st_size,
+                "created_at": time.strftime(
+                    "%Y-%m-%dT%H:%M:%S",
+                    time.gmtime(path.stat().st_mtime),
+                ),
+            }
+            sidecar = path.with_suffix("").with_suffix("")
+            sidecar = self.output_dir / f"{path.stem}.provenance.json"
+            if sidecar.is_file():
+                record = read_json(sidecar, default=None)
+                if isinstance(record, dict):
+                    entry["provenance"] = record
+            entries.append(entry)
+        return entries
+
     # ---------- LoRA test integration ----------
+
+    def validate_workflow_request(
+        self,
+        workflow_id: str,
+        params: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Pre-flight a generation request against the live ComfyUI.
+
+        Catches missing workflows, unavailable models/LoRAs and unmapped
+        inputs *before* queueing, so failures happen at plan time rather than
+        mid-generation. Never talks to ComfyUI destructively.
+        """
+        checks: list[dict[str, Any]] = []
+        ok = True
+
+        # 1. Workflow exists and loads.
+        try:
+            graph, mapping = self.load_workflow(workflow_id)
+            checks.append({"name": "Workflow", "passed": True,
+                           "detail": f"{len(graph)} nodes"})
+        except WorkflowError as exc:
+            return {
+                "valid": False,
+                "checks": [{"name": "Workflow", "passed": False,
+                            "detail": exc.detail}],
+                "errors": [exc.detail],
+            }
+
+        # 2. Mapped inputs actually exist in the mapping.
+        unsupported = [name for name in params
+                       if name not in mapping and params[name] is not None]
+        if unsupported:
+            ok = False
+            checks.append({
+                "name": "Inputs", "passed": False,
+                "detail": f"workflow does not map: {', '.join(sorted(unsupported))}",
+            })
+        else:
+            used = [name for name in params if name in mapping and params[name] is not None]
+            checks.append({"name": "Inputs", "passed": True,
+                           "detail": ", ".join(sorted(used)) or "defaults"})
+
+        # 3. Live model availability (only when ComfyUI answers).
+        connected = False
+        checkpoints: list[str] = []
+        loras: list[str] = []
+        try:
+            status = self.status()
+            connected = bool(status.get("connected"))
+            checkpoints = status.get("checkpoints") or []
+            loras = status.get("loras") or []
+        except ComfyUIServiceError:
+            pass
+
+        if not connected:
+            checks.append({
+                "name": "ComfyUI connection", "passed": False,
+                "detail": f"not reachable at {self.client.base_url} — start "
+                          "ComfyUI, then retry",
+            })
+            ok = False
+        else:
+            checks.append({"name": "ComfyUI connection", "passed": True,
+                           "detail": self.client.base_url})
+
+            checkpoint = params.get("checkpoint")
+            if checkpoint and checkpoints and checkpoint not in checkpoints:
+                ok = False
+                checks.append({
+                    "name": "Checkpoint", "passed": False,
+                    "detail": f"'{checkpoint}' not installed; available: "
+                              f"{', '.join(checkpoints[:5])}",
+                })
+            elif checkpoint:
+                checks.append({"name": "Checkpoint", "passed": True,
+                               "detail": checkpoint})
+
+            lora_name = params.get("lora_name")
+            if lora_name and loras and lora_name not in loras:
+                ok = False
+                checks.append({
+                    "name": "LoRA", "passed": False,
+                    "detail": f"'{lora_name}' is not in ComfyUI's loras folder",
+                })
+            elif lora_name:
+                checks.append({"name": "LoRA", "passed": True, "detail": lora_name})
+
+        return {"valid": ok, "checks": checks, "errors": [] if ok else
+                [c["detail"] for c in checks if not c["passed"]]}
 
     def prepare_lora_test(
         self,

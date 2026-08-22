@@ -471,6 +471,19 @@ def get_training_status(
     return TrainingStatusResponse(**status)
 
 
+@router.get("/projects/{project_id}/runs")
+def list_training_runs(
+    project_id: str,
+    service: LoRATrainingService = Depends(get_training_service),
+) -> dict:
+    """Training run history: which dataset and settings created each LoRA."""
+    try:
+        runs = service.list_runs(project_id)
+    except (ServiceError, UnsafePathError) as exc:
+        raise _http_error(exc) from exc
+    return {"runs": runs, "count": len(runs)}
+
+
 @router.get("/projects/{project_id}/training/log")
 def get_training_log(
     project_id: str,

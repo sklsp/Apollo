@@ -27,6 +27,7 @@ from app.core.exceptions import AIToolkitError, LoRAProjectError
 from app.core.jobs import Job, JobStatus, JobStore
 from app.core.paths import is_safetensors, safe_join
 from app.services.lora_dataset_service import LoRAProjectService
+from app.services.run_history import RunHistory
 
 logger = logging.getLogger(__name__)
 
@@ -409,6 +410,7 @@ class LoRATrainingService:
         self.projects = projects or LoRAProjectService()
         self.jobs = jobs or JobStore(persist_path=settings.jobs_file)
         self._active: dict[str, AIToolkitProcess] = {}
+        self.history = RunHistory(self.projects)
 
     # ---------- availability ----------
 
@@ -600,6 +602,39 @@ class LoRATrainingService:
         self.projects.update_project(
             project_id, training_status="queued", training_job_id=job.id
         )
+
+        # Record the run with full provenance before anything can fail.
+        try:
+            from app.services.hardware import HardwareInfo, detect_hardware
+            from app.services.training_preflight import advise
+
+            images = self.projects.list_images(project_id)
+            project = self.projects.get_project(project_id)
+            process_config = config["config"]["process"][0]
+            hardware_info = detect_hardware(comfyui_base_url=settings.comfyui_base_url)
+            hardware = hardware_info.to_dict()
+
+            # Advisory verdict at launch time; never blocks the run.
+            try:
+                preflight_verdict = advise(options, hardware_info).verdict
+            except Exception:  # noqa: BLE001
+                preflight_verdict = None
+
+            self.history.create_run(
+                project_id,
+                config=process_config,
+                base_model=str(process_config.get("model", {}).get("name_or_path", "")),
+                trigger_word=project.trigger_word,
+                arch=project.arch,
+                dataset_image_count=len(images),
+                dataset_captioned_count=sum(1 for i in images if i.caption.strip()),
+                hardware=hardware,
+                preflight_verdict=preflight_verdict,
+                job_id=job.id,
+            )
+        except Exception as exc:  # noqa: BLE001 - history must never block training
+            logger.warning("[LORA TRAINING] Could not record run history: %s", exc)
+
         return job
 
     def _run(self, job: Job, project_id: str, config_path: Path, log_path: Path) -> None:
@@ -623,6 +658,7 @@ class LoRATrainingService:
             if self.jobs.is_cancelled(job.id):
                 trainer.stop()
                 self.projects.update_project(project_id, training_status="cancelled")
+                self._finish_run_record(project_id, job.id, status="cancelled")
                 logger.info("[LORA TRAINING] %s cancelled", project_id)
                 return
             snapshot = trainer.snapshot()
@@ -649,6 +685,12 @@ class LoRATrainingService:
             last_line = trainer.snapshot()["last_line"] or "See training.log for details."
             from app.services.training_preflight import diagnose_failure
             diagnosis = diagnose_failure(last_line)
+            self._finish_run_record(
+                project_id, job.id, status="failed",
+                error=f"{diagnosis['explanation']} | Raw: {diagnosis['raw']}",
+                final_loss=trainer.snapshot().get("loss"),
+                total_steps=trainer.snapshot().get("total_steps", 0),
+            )
             raise AIToolkitError(
                 f"AI Toolkit exited with code {exit_code}: {diagnosis['explanation']}",
                 status_code=500,
@@ -658,6 +700,8 @@ class LoRATrainingService:
         lora_path = self.find_trained_lora(project_id)
         if lora_path is None:
             self.projects.update_project(project_id, training_status="completed_no_output")
+            self._finish_run_record(project_id, job.id, status="failed",
+                                    error="No .safetensors produced")
             raise AIToolkitError(
                 "Training finished but no .safetensors file was found in the output folder",
                 status_code=500,
@@ -666,10 +710,31 @@ class LoRATrainingService:
         self.projects.update_project(
             project_id, training_status="completed", trained_lora_path=str(lora_path)
         )
+        snapshot = trainer.snapshot()
+        self._finish_run_record(
+            project_id, job.id, status="completed",
+            lora_filename=lora_path.name,
+            lora_size_bytes=lora_path.stat().st_size,
+            final_loss=snapshot.get("loss"),
+            total_steps=snapshot.get("total_steps", 0),
+        )
         self.jobs.update(
             job.id, outputs=[lora_path.name], message=f"LoRA ready: {lora_path.name}"
         )
         logger.info("[LORA TRAINING] %s completed -> %s", project_id, lora_path.name)
+
+    def _finish_run_record(self, project_id: str, job_id: str, **fields: Any) -> None:
+        """Attach the outcome to the run-history record for this job."""
+        try:
+            run = next(
+                (r for r in self.history.list_runs(project_id) if r.get("job_id") == job_id),
+                None,
+            )
+            if run:
+                fields.setdefault("completed_at", time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()))
+                self.history.update_run(project_id, run["id"], **fields)
+        except Exception as exc:  # noqa: BLE001 - history must never break training
+            logger.warning("[LORA TRAINING] Could not update run history: %s", exc)
 
     def stop_training(self, project_id: str) -> bool:
         trainer = self._active.get(project_id)
@@ -679,10 +744,16 @@ class LoRATrainingService:
         project = self.projects.get_project(project_id)
         if project.training_job_id:
             self.jobs.cancel(project.training_job_id)
+            self._finish_run_record(project_id, project.training_job_id,
+                                    status="cancelled")
         trainer.stop()
         self._active.pop(project_id, None)
         self.projects.update_project(project_id, training_status="cancelled")
         return True
+
+    def list_runs(self, project_id: str) -> list[dict[str, Any]]:
+        """Training run history for a project (newest first)."""
+        return self.history.list_runs(project_id)
 
     # ---------- introspection ----------
 

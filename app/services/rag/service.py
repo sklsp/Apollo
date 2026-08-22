@@ -157,6 +157,33 @@ class RAGService:
         self._save()
         return len(chunks)
 
+    def query_debug(self, question: str, top_k: int | None = None) -> dict[str, Any]:
+        """Developer view of one retrieval: query → chunks → scores → context.
+
+        Exposes exactly what the model would see, so a bad answer can be
+        traced to its retrieved context (or to nothing being retrieved).
+        """
+        k = top_k or settings.rag_top_k
+        chunks = self.query(question, top_k=k)
+        return {
+            "query": question,
+            "top_k": k,
+            "index_chunks": self.chunk_count,
+            "embedding_model": self.embedding_client.model,
+            "backend": self.embedding_client.backend,
+            "retrieved": [
+                {
+                    "doc_id": chunk.doc_id,
+                    "filename": chunk.filename,
+                    "chunk_index": chunk.chunk_index,
+                    "score": round(chunk.score, 4),
+                    "text": chunk.text,
+                }
+                for chunk in chunks
+            ],
+            "context": self.format_context(chunks),
+        }
+
     def query(self, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
         """Retrieve the most relevant chunks for a question."""
         if not self._store or self._store.size == 0:

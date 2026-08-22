@@ -150,6 +150,36 @@ def generate(
     return _job_response(job)
 
 
+@router.post("/validate-generation")
+def validate_generation(
+    payload: GenerationRequest,
+    service: ComfyUIService = Depends(get_comfyui_service),
+) -> dict:
+    """Pre-flight a generation request without queueing it.
+
+    Reports missing workflows/models/LoRAs and unmapped inputs before any
+    GPU time is spent.
+    """
+    try:
+        return service.validate_workflow_request(
+            payload.workflow_id, payload.to_params())
+    except (ServiceError, UnsafePathError) as exc:
+        raise _http_error(exc) from exc
+
+
+@router.get("/generated")
+def list_generated(
+    limit: int = 50,
+    service: ComfyUIService = Depends(get_comfyui_service),
+) -> dict:
+    """Recent generated images with provenance records attached."""
+    try:
+        entries = service.list_generated(limit=max(1, min(limit, 200)))
+    except (ServiceError, UnsafePathError) as exc:
+        raise _http_error(exc) from exc
+    return {"images": entries, "count": len(entries)}
+
+
 @router.get("/test-lora")
 def prepare_lora_test(
     lora: str,
