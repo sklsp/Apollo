@@ -48,10 +48,10 @@ def create_app(service: object | None = None) -> FastAPI:
             Ollama without a live server.
     """
     app = FastAPI(
-        title="Local AI Agent API",
+        title="Apollo API",
         version="2.0.0",
         description=(
-            "Local AI workspace: chat memory, document RAG, prompt templates, "
+            "Unified local AI workspace: chat memory, document RAG, prompt templates, "
             "ComfyUI generation, and Ostris AI Toolkit LoRA training"
         ),
     )

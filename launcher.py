@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-command launcher for the AI Document Agent stack.
+"""One-command launcher for the Apollo stack.
 
 Starts FastAPI (uvicorn) and a Cloudflare quick tunnel, captures the public
 URL, copies it to the clipboard, and opens the dashboard in the browser.
@@ -111,7 +111,7 @@ def _on_tunnel_line(line: str) -> None:
 def _announce_public_url(url: str) -> None:
     """Print, copy, and open the public dashboard URL."""
     print("\n" + "=" * 70)
-    print("  AI DOCUMENT AGENT — LIVE")
+    print("  APOLLO — LIVE")
     print("=" * 70)
     print(f"\n  Local:   http://localhost:{PORT}")
     print(f"  Public:  {url}")
@@ -237,7 +237,7 @@ def _monitor() -> int:
 def main() -> int:
     """Entry point for the all-in-one dev launcher."""
     print("=" * 70)
-    print("  AI DOCUMENT AGENT — STARTUP")
+    print("  APOLLO — STARTUP")
     print("=" * 70)
     print(f"  Project:  {PROJECT_ROOT}")
     print(f"  Backend:  {UVICORN_APP} on {HOST}:{PORT}")

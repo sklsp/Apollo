@@ -1,4 +1,4 @@
-"""Models package for the AI Document Agent API."""
+"""Models package for the Apollo API."""
 
 from app.models.schemas import ChatRequest, ChatResponse, HealthResponse, ModelsResponse
 

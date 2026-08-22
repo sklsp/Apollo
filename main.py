@@ -1,4 +1,4 @@
-"""CLI and API entrypoints for the AI Document Agent."""
+"""CLI and API entrypoints for Apollo."""
 
 import argparse
 

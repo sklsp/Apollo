@@ -1,4 +1,4 @@
-"""API routes for the AI Document Agent."""
+"""API routes for Apollo."""
 
 import os
 import tempfile

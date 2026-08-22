@@ -1,8 +1,8 @@
-# AI Document Agent
+# Apollo
 
-**A local-first AI workspace — chat with your documents, generate images, and train LoRAs. No cloud required.**
+**A unified local AI workspace — documents, image generation, datasets, LoRA training, and ComfyUI. No cloud required.**
 
-Upload PDF, DOCX, or TXT files and ask questions with optional RAG context. Generate images through a local ComfyUI instance. Build training datasets and train LoRA models with the Ostris AI Toolkit — all on your own machine. Built with FastAPI, Ollama, FAISS, ComfyUI, and AI Toolkit.
+Apollo connects the whole local AI workflow in one application: upload PDF, DOCX, or TXT files and ask questions with RAG context backed by a persistent vector index. Generate images through a local ComfyUI instance. Build training datasets, caption them with a local vision model, validate them for duplicates and quality issues, then train LoRA models with the Ostris AI Toolkit — with hardware-aware preflight checks against your actual GPU. Every generated asset keeps its provenance. Built with FastAPI, Ollama, FAISS, ComfyUI, and AI Toolkit.
 
 <p align="center">
   <img src="https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
@@ -10,26 +10,30 @@ Upload PDF, DOCX, or TXT files and ask questions with optional RAG context. Gene
   <img src="https://img.shields.io/badge/FAISS-0466C8?style=flat" alt="FAISS" />
   <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/RAG-Enabled-7C3AED?style=flat" alt="RAG" />
-  <img src="https://img.shields.io/badge/Cloudflare-Tunnel-F38020?style=flat&logo=cloudflare&logoColor=white" alt="Cloudflare" />
+  <img src="https://img.shields.io/badge/ComfyUI-Image%20Gen-CC4A31?style=flat" alt="ComfyUI" />
+  <img src="https://img.shields.io/badge/LoRA-Training-F5A623?style=flat" alt="LoRA" />
 </p>
 
 ---
 
 ## Live Demo Overview
 
-AI Document Agent is a full AI workspace that runs entirely on your machine:
+Apollo is a full AI workspace that runs entirely on your machine:
 
 | Capability | Description |
 |------------|-------------|
 | **Chat** | Conversational AI powered by local Ollama models |
-| **Document RAG** | Upload files, embed chunks, retrieve relevant context at query time |
+| **Document RAG** | Upload files, embed chunks, retrieve relevant context at query time — the FAISS index persists across restarts |
 | **Prompt library** | Save, edit, and reuse templates with `{input}` variables |
 | **Session memory** | Multiple chats with per-session history and settings — persisted across restarts |
-| **ComfyUI generation** | Run local ComfyUI workflows from the dashboard, with importable workflow JSON |
+| **ComfyUI generation** | Run local ComfyUI workflows from the dashboard, with importable workflow JSON and pre-generation validation |
 | **LoRA Studio** | Build datasets, caption them with a local vision model, train LoRAs via Ostris AI Toolkit |
-| **Dataset quality control** | One-click validation: duplicates, broken images, caption coverage, 0–100 quality score |
-| **Training presets** | Character / Style / Product / Concept starting points with plain-language explanations |
+| **Dataset quality control** | One-click validation: exact + near duplicates (multi-signal), broken images, caption coverage, 0–100 quality score |
+| **Training presets** | Character / Style / Product / Concept starting points, plus hardware-aware conservative/balanced/quality variants |
+| **Hardware preflight** | Detects your GPU/VRAM/RAM/disk and classifies a training config as safe / heavy / risky before you start |
 | **One-click LoRA testing** | After training, jump straight into a prefilled ComfyUI generation with the LoRA loaded |
+| **Provenance** | Generated images keep workflow/prompt/seed/LoRA sidecars; every training run records its dataset, config and hardware |
+| **Unified dashboard** | Home view with document/dataset/job counts, system health, and recent generations at a glance |
 
 Each module is independent: **chat and RAG keep working when ComfyUI, Ollama, or AI Toolkit are unavailable.**
 
@@ -112,25 +116,26 @@ Built as a portfolio-ready example of how to ship a private, self-hosted AI know
 ## Architecture
 
 ```
-Frontend (Vanilla JS Dashboard — Chat · Docs · ComfyUI · LoRA Studio)
+Frontend (Vanilla JS Dashboard — Home · Chat · Docs · ComfyUI · LoRA Studio)
         │
         ▼
 FastAPI Backend
         │
-        ├── Document / RAG stack ────────────────────────┐
-        │     /chat · /documents · /prompts · /health    │
-        │     RAG Service (chunk → embed → retrieve)     │
-        │     FAISS vector store (in-memory, top-k)      ▼
-        │                                             Ollama
-        │                                     (chat + embeddings + vision)
+        ├── Document / RAG stack ────────────────────┐
+        │     /chat · /documents · /prompts · /health │
+        │     RAG Service (chunk → embed → retrieve)  │
+        │     FAISS vector store (persistent, top-k)  ▼
+        │                                          Ollama
+        │                                  (chat + embeddings + vision)
         │
         ├── ComfyUIService ──► ComfyUIClient ──► ComfyUI ──► generated images
-        │     /comfyui/*
+        │     /comfyui/*                                     + provenance sidecars
         │
         └── LoRA modules
               /loras/*
               LoRAProjectService    ──► dataset on disk (images + .txt captions)
               LoRATrainingService   ──► AIToolkitProcess ──► Ostris AI Toolkit
+              RunHistory            ──► per-project run records (runs.json)
                                                                   │
                                                                   ▼
                                                         LoRA .safetensors
@@ -159,7 +164,7 @@ or process adapter. Nothing in the document pipeline imports ComfyUI code.
 | Backend | FastAPI (Python) |
 | LLM | Ollama (`llama3.2`, etc.) |
 | Embeddings | `nomic-embed-text` + `sentence-transformers` fallback |
-| Vector DB | FAISS (in-memory) |
+| Vector DB | FAISS (persistent on disk, atomic saves, corruption quarantine) |
 | Document parsing | pypdf, python-docx |
 | Frontend | Vanilla JS (chat UI dashboard) |
 | Image generation | ComfyUI (external local instance, HTTP API) |
@@ -300,6 +305,9 @@ Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 | `DELETE` | `/prompts/{prompt_id}` | Delete a prompt |
 | `GET` | `/sessions/{session_id}/history` | Session chat history |
 | `DELETE` | `/sessions/{session_id}/history` | Clear session history |
+| `GET` | `/rag/status` | Vector index state: what is indexed, with which model |
+| `GET` | `/rag/debug-query?q=...` | Developer view of one retrieval: chunks, scores, context |
+| `GET` | `/dashboard` | Unified workspace overview: counts, activity, system health |
 
 ### ComfyUI
 
@@ -312,8 +320,11 @@ Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 | `GET` | `/comfyui/workflows/{id}` | Full graph + node list + input mapping |
 | `DELETE` | `/comfyui/workflows/{id}` | Delete a workflow |
 | `POST` | `/comfyui/generate` | Queue a generation, returns a job immediately |
+| `POST` | `/comfyui/validate-generation` | Pre-flight a request without queueing (missing models/LoRAs caught early) |
+| `GET` | `/comfyui/generated` | Recent generated images with provenance records |
 | `GET` | `/comfyui/jobs/{job_id}` | Generation job status |
 | `GET` | `/comfyui/images/{filename}` | Serve a generated image |
+| `GET` | `/comfyui/test-lora` | One-click LoRA test setup: picks a workflow, prefills inputs |
 
 ### LoRA
 
@@ -321,6 +332,9 @@ Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 |--------|------|-------------|
 | `GET` | `/loras` | LoRA library (project outputs + ComfyUI's folder) |
 | `GET` | `/loras/toolkit/status` | Whether AI Toolkit is configured |
+| `GET` | `/loras/training/presets` | Training presets with plain-language explanations |
+| `GET` | `/loras/training/hardware-presets` | Conservative/balanced/quality variants for the detected GPU |
+| `GET` | `/loras/hardware` | Detected hardware: GPU, VRAM, RAM, disk |
 | `POST` | `/loras/projects` | Create a LoRA project |
 | `GET` | `/loras/projects` | List projects |
 | `GET` | `/loras/projects/{id}` | Project detail |
@@ -333,10 +347,13 @@ Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 | `PUT` | `/loras/projects/{id}/captions/{image_id}` | Write a caption (marks it hand-edited) |
 | `POST` | `/loras/projects/{id}/generate-captions` | Caption the dataset with a local vision model |
 | `POST` | `/loras/projects/{id}/config` | Generate `training.yml` without starting a run |
+| `POST` | `/loras/projects/{id}/preflight` | Validate a training config against the detected hardware |
 | `POST` | `/loras/projects/{id}/train` | Start training |
 | `POST` | `/loras/projects/{id}/stop` | Stop this project's training process |
 | `GET` | `/loras/projects/{id}/training` | Training status + progress |
 | `GET` | `/loras/projects/{id}/training/log` | Tail of the training log |
+| `GET` | `/loras/projects/{id}/runs` | Training run history: dataset, config, hardware, outcome per run |
+| `GET` | `/loras/projects/{id}/validate` | Dataset quality report: duplicates, broken images, score |
 
 ### Jobs
 
@@ -399,11 +416,11 @@ ollama pull nomic-embed-text
 ## Project structure
 
 ```
-AI-Document-Agent/
+Apollo/
 ├── app/                          # FastAPI application (main product)
 │   ├── main.py                   # App factory + route registration
 │   ├── api/
-│   │   ├── routes.py             # Chat / documents / prompts endpoints
+│   │   ├── routes.py             # Chat / documents / prompts / dashboard endpoints
 │   │   ├── comfyui_routes.py     # ComfyUI + job endpoints
 │   │   └── lora_routes.py        # LoRA project / dataset / training endpoints
 │   ├── models/
@@ -414,35 +431,41 @@ AI-Document-Agent/
 │   │   ├── config.py             # Settings (Ollama, RAG, ComfyUI, AI Toolkit)
 │   │   ├── exceptions.py         # API error types
 │   │   ├── paths.py              # Path traversal guards, upload validation
+│   │   ├── persistence.py        # Atomic JSON persistence helper
 │   │   └── jobs.py               # Background job store (threadpool + JSON)
 │   ├── clients/
 │   │   ├── ollama_client.py      # Ollama HTTP client (chat, embed, vision)
 │   │   └── comfyui_client.py     # ComfyUI HTTP client
 │   ├── services/
-│   │   ├── document_service.py   # Document metadata storage
+│   │   ├── document_service.py   # Document storage (persisted)
 │   │   ├── prompt_service.py     # Prompt library CRUD
-│   │   ├── memory_service.py     # Session chat history
+│   │   ├── memory_service.py     # Session chat history (persisted)
 │   │   ├── llm_service.py        # Chat + model listing
-│   │   ├── comfyui_service.py    # Workflow library, injection, generation jobs
+│   │   ├── comfyui_service.py    # Workflow library, injection, generation + provenance
+│   │   ├── dataset_validation.py # Multi-signal duplicate detection + quality score
+│   │   ├── hardware.py           # GPU/VRAM/RAM/disk detection (NVIDIA/AMD/CPU)
+│   │   ├── training_preflight.py # Hardware-aware config advisor + failure diagnostics
+│   │   ├── run_history.py        # Per-project training run records
+│   │   ├── dashboard.py          # Unified workspace overview aggregation
 │   │   ├── lora_dataset_service.py   # Projects, images, captions, LoRA library
 │   │   ├── lora_training_service.py  # AI Toolkit config gen + subprocess
 │   │   └── rag/                  # RAG pipeline
 │   │       ├── ingestion.py      # PDF / DOCX / TXT extraction
 │   │       ├── chunking.py       # Text chunking
 │   │       ├── embeddings.py     # Ollama + fallback embeddings
-│   │       ├── vector_store.py   # FAISS index
-│   │       └── service.py        # RAGService orchestration
+│   │       ├── vector_store.py   # Persistent FAISS index (+ quarantine recovery)
+│   │       └── service.py        # RAGService orchestration (incremental indexing)
 │   └── frontend/
-│       └── index.html            # Dashboard UI
+│       └── index.html            # Dashboard UI (Home · Chat · Docs · ComfyUI · LoRA)
 ├── ai_agent/                     # Interactive CLI agent (python main.py)
 ├── scripts/                      # Dev & maintenance utilities
 │   ├── verify_system.py          # Smoke-test services + routes
-│   └── diagnostics_ollama.py     # Ollama connectivity probe
+│   ├── diagnostics_ollama.py     # Ollama connectivity probe
+│   ├── smoke_preflight.py        # Live training-preflight demo
+│   └── smoke_rag_persistence.py  # Restart-survival verification for the index
 ├── workflows/                    # ComfyUI workflows + node-input mappings
-│   ├── sdxl_txt2img.json         #   graph (ComfyUI API format)
-│   └── sdxl_txt2img.map.json     #   which node/field each input writes to
-├── tests/                        # Test suite + legacy debug scripts
-├── data/                         # Sample documents, LoRA projects, generated images
+├── tests/                        # Test suite (244 tests) + legacy debug scripts
+├── data/                         # Documents, sessions, jobs, LoRA projects, generated images, rag index
 ├── images/                       # Feature demo GIFs (README showcase)
 ├── launcher.py                   # One-command startup (API + tunnel)
 ├── main.py                       # CLI / API entrypoint
@@ -611,12 +634,12 @@ Local-first does not mean unguarded:
 ## Development notes
 
 - FastAPI binds to `0.0.0.0` for LAN access
-- RAG vector store is in-memory (resets on server restart)
+- The RAG vector index persists under `data/rag/` and survives restarts; a corrupted index is quarantined, not deleted
+- Documents, sessions, jobs, LoRA projects, workflows and generated images all persist on disk
 - Upload debug logs appear in the server console: `[UPLOAD] filename`, `extracted chars`, `rag chunks indexed`
 - Utility scripts: `python scripts/verify_system.py`, `python scripts/diagnostics_ollama.py`
-- Run the tests with `python -m pytest`
-- LoRA projects, workflows, generated images and jobs persist on disk and survive restarts
-- Log prefixes: `[COMFYUI]`, `[COMFYUI JOB]`, `[LORA]`, `[LORA TRAINING]`, `[DATASET]`
+- Run the tests with `python -m pytest` (244 tests); stress tests: `pytest tests/test_stress.py -m slow`
+- Log prefixes: `[COMFYUI]`, `[COMFYUI JOB]`, `[LORA]`, `[LORA TRAINING]`, `[DATASET]`, `[RAG]`, `[RUN HISTORY]`
 - `tests/` also contains standalone diagnostic scripts (`test_endpoints.py`,
   `test_ollama_detailed.py`, …) that predate the suite. They print at import time
   and some need a live Ollama, so `tests/conftest.py` excludes them from
@@ -624,7 +647,6 @@ Local-first does not mean unguarded:
 
 ### Future improvements
 
-- **Persistent FAISS index storage** — save/load embeddings to disk so document memory survives restarts
 - Optional ChromaDB backend as an alternative vector store
 
 ---
