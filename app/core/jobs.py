@@ -101,6 +101,15 @@ class JobStore:
             try:
                 raw = dict(raw)
                 raw["status"] = JobStatus(raw.get("status", "failed"))
+                # Drop fields this version doesn't know (e.g. derived values
+                # like elapsed_seconds saved by a newer/older build) so a
+                # schema tweak never makes old job files unreadable.
+                known = set(Job.__dataclass_fields__)
+                unknown = set(raw) - known
+                if unknown:
+                    logger.info("[JOBS] Dropping unknown field(s): %s",
+                                ", ".join(sorted(unknown)))
+                    raw = {k: v for k, v in raw.items() if k in known}
                 job = Job(**raw)
             except (TypeError, ValueError) as exc:
                 logger.warning("[JOBS] Skipping unreadable job record: %s", exc)

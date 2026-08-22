@@ -1130,6 +1130,9 @@
     <div class="dashboard">
         <!-- WORKSPACE NAVIGATION -->
         <nav class="nav-rail">
+            <button class="nav-item" data-view="home">
+                <span class="nav-item-icon">&#127968;</span><span>Home</span>
+            </button>
             <button class="nav-item active" data-view="chat">
                 <span class="nav-item-icon">&#128172;</span><span>Chat</span>
             </button>
@@ -1149,6 +1152,44 @@
                 <div class="nav-status-item"><span class="status-dot" data-status="rag"></span>RAG</div>
             </div>
         </nav>
+
+        <!-- ============ VIEW: HOME (unified dashboard) ============ -->
+        <div class="view" id="view-home">
+            <div style="padding:24px;max-width:1100px;margin:0 auto;overflow-y:auto;height:100vh">
+                <h1 style="font-size:22px;margin-bottom:4px">Workspace</h1>
+                <div class="field-hint" id="dash-updated" style="margin-bottom:18px"></div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px" id="dash-stats">
+                    <div class="card" style="padding:14px"><div class="field-hint">Documents</div><div style="font-size:26px;font-weight:700" id="dash-docs">&mdash;</div></div>
+                    <div class="card" style="padding:14px"><div class="field-hint">Indexed chunks</div><div style="font-size:26px;font-weight:700" id="dash-chunks">&mdash;</div></div>
+                    <div class="card" style="padding:14px"><div class="field-hint">Dataset images</div><div style="font-size:26px;font-weight:700" id="dash-images">&mdash;</div></div>
+                    <div class="card" style="padding:14px"><div class="field-hint">LoRAs trained</div><div style="font-size:26px;font-weight:700" id="dash-loras">&mdash;</div></div>
+                    <div class="card" style="padding:14px"><div class="field-hint">Active jobs</div><div style="font-size:26px;font-weight:700" id="dash-jobs">&mdash;</div></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="dash-columns">
+                    <div class="card" style="padding:16px">
+                        <div class="card-title">System</div>
+                        <div id="dash-health" style="font-size:13px;line-height:2"></div>
+                    </div>
+                    <div class="card" style="padding:16px">
+                        <div class="card-title">Active jobs</div>
+                        <div id="dash-active" class="field-hint">Nothing running.</div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:16px;margin-top:16px">
+                    <div class="card-title">Projects</div>
+                    <div id="dash-projects" class="field-hint">No LoRA projects yet.</div>
+                </div>
+
+                <div class="card" style="padding:16px;margin-top:16px">
+                    <div class="card-title">Recent generations</div>
+                    <div class="dataset-grid" id="dash-gallery"></div>
+                    <div class="field-hint" id="dash-gallery-empty">Nothing generated yet.</div>
+                </div>
+            </div>
+        </div>
 
         <!-- ============ VIEW: CHAT (existing workspace, unchanged) ============ -->
         <div class="view active" id="view-chat">
@@ -1289,6 +1330,11 @@
                                 <select id="comfy-checkpoint"><option value="">Workflow default</option></select>
                             </div>
                             <button class="btn block" id="comfy-generate-btn">Generate</button>
+                            <button class="btn secondary block" id="comfy-check-btn" style="margin-top:8px">Check before generating</button>
+                            <div id="comfy-check-report" style="display:none;margin-top:10px;padding:10px;border:1px solid #333;border-radius:8px;font-size:13px;line-height:1.7">
+                                <div id="comfyck-verdict" style="font-weight:600;margin-bottom:4px"></div>
+                                <ul id="comfyck-checks" style="margin:0;padding-left:18px"></ul>
+                            </div>
                         </div>
 
                         <div class="card" id="comfy-lora-card">
@@ -1536,9 +1582,13 @@
                                         <div class="kv"><span>Output</span><span id="tr-output">&mdash;</span></div>
                                     </div>
                                     <div class="card">
-                                        <div class="card-title">Log</div>
-                                        <div class="log-view" id="tr-log">No log output yet.</div>
+                                        <div class="card-title">Training runs</div>
+                                        <div id="tr-runs" class="field-hint">No runs recorded yet.</div>
                                     </div>
+                                    <details class="card">
+                                        <summary class="card-title" style="cursor:pointer">Raw log</summary>
+                                        <div class="log-view" id="tr-log">No log output yet.</div>
+                                    </details>
                                 </div>
                             </div>
                         </div>
@@ -2260,6 +2310,7 @@
                 $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === view));
                 $$(".view").forEach(v => v.classList.toggle("active", v.id === `view-${target}`));
 
+                if (view === "home") { loadDashboard(); }
                 if (view === "documents") {
                     const panel = document.querySelector(".right-panel");
                     if (panel) panel.scrollTop = 0;
@@ -2271,6 +2322,93 @@
                 }
                 if (view === "comfyui") { refreshComfyStatus(); loadWorkflows(); }
                 if (view === "lora") { loadProjects(); loadLibrary(); loadToolkitStatus(); }
+            }
+
+            // ---------- home dashboard ----------
+            let dashTimer = null;
+            async function loadDashboard() {
+                let data;
+                try {
+                    data = await api("/dashboard");
+                } catch (error) { notify(error.message); return; }
+
+                $("#dash-updated").textContent = `Updated ${data.generated_at} — refreshes every 30s while open`;
+
+                const docs = data.documents || {};
+                $("#dash-docs").textContent = docs.count ?? "—";
+                $("#dash-chunks").textContent = docs.indexed_chunks ?? "—";
+                const ds = data.datasets || {};
+                $("#dash-images").textContent = ds.image_count ?? "—";
+                $("#dash-loras").textContent = ds.lora_count ?? "—";
+                $("#dash-jobs").textContent = (data.jobs && data.jobs.active_count) ?? "—";
+
+                // System health
+                const health = data.health || {};
+                const rows = [
+                    ["Ollama", health.ollama, "chat, RAG, captioning"],
+                    ["ComfyUI", health.comfyui, "image generation"],
+                    ["AI Toolkit", { online: health.ai_toolkit && health.ai_toolkit.configured,
+                                     url: health.ai_toolkit && health.ai_toolkit.detail },
+                     "LoRA training"],
+                ];
+                $("#dash-health").innerHTML = rows.map(([name, info, deps]) => {
+                    const online = info && info.online;
+                    const dot = online
+                        ? `<span class="status-dot online" style="display:inline-block"></span>`
+                        : `<span class="status-dot offline" style="display:inline-block"></span>`;
+                    return `<div>${dot} <strong>${escapeHtml(name)}</strong>
+                        <span class="field-hint">— ${online ? "online" : "offline"} · needed for ${escapeHtml(deps)}</span></div>`;
+                }).join("");
+
+                // Active jobs
+                const active = (data.jobs && data.jobs.active) || [];
+                $("#dash-active").innerHTML = active.length
+                    ? active.map(j => `<div style="margin-bottom:6px">
+                        <span class="badge ${j.status}">${escapeHtml(j.type)}</span>
+                        ${escapeHtml(j.message || "")}
+                        ${j.progress !== null && j.progress !== undefined ? ` (${j.progress}%)` : ""}</div>`).join("")
+                    : `<span class="field-hint">Nothing running.</span>`;
+
+                // Projects
+                const projects = (ds.projects || []);
+                $("#dash-projects").innerHTML = projects.length
+                    ? projects.map(p => `<div class="item-row">
+                        <div class="item-main">
+                            <div class="item-name">${escapeHtml(p.name)}
+                                <span class="badge ${p.training_status}">${escapeHtml(p.training_status)}</span></div>
+                            <div class="item-meta">${p.image_count} images · ${p.captioned_count} captioned · ${p.run_count} runs${p.trigger_word ? " · trigger: " + escapeHtml(p.trigger_word) : ""}</div>
+                        </div>
+                        <div class="item-actions"><button class="btn small" onclick="document.querySelector('.nav-item[data-view=\\'lora\\']').click()">Open LoRA Studio</button></div>
+                      </div>`).join("")
+                    : `<span class="field-hint">No LoRA projects yet.</span>`;
+
+                // Recent generations with provenance
+                const gens = (data.generations && data.generations.recent) || [];
+                const gallery = $("#dash-gallery");
+                gallery.innerHTML = "";
+                gens.forEach(g => {
+                    const tile = document.createElement("div");
+                    tile.className = "dataset-tile";
+                    const prov = g.provenance || {};
+                    const tip = [
+                        prov.prompt ? `Prompt: ${prov.prompt}` : null,
+                        prov.seed !== undefined && prov.seed !== null ? `Seed: ${prov.seed}` : null,
+                        prov.lora_name ? `LoRA: ${prov.lora_name}` : null,
+                        prov.workflow_id ? `Workflow: ${prov.workflow_id}` : null,
+                    ].filter(Boolean).join("\n");
+                    tile.innerHTML = `
+                        <img src="${API()}${g.url}" alt="${escapeHtml(g.filename)}" loading="lazy" title="${escapeHtml(tip)}" />
+                        <div class="dataset-tile-body">
+                            <span class="tile-name" title="${escapeHtml(tip)}">${escapeHtml(prov.workflow_id || g.filename)}</span>
+                        </div>`;
+                    gallery.appendChild(tile);
+                });
+                $("#dash-gallery-empty").style.display = gens.length ? "none" : "block";
+
+                clearTimeout(dashTimer);
+                dashTimer = setTimeout(() => {
+                    if ($("#view-home").classList.contains("active")) loadDashboard();
+                }, 30000);
             }
 
             // ---------- system status ----------
@@ -2452,6 +2590,41 @@
                 gate("#comfy-lora-model", "lora_strength_model");
                 gate("#comfy-lora-clip", "lora_strength_clip");
                 $("#comfy-lora-card").style.opacity = supported.includes("lora_name") ? "1" : "0.5";
+            }
+
+            // ---------- ComfyUI: pre-generation check ----------
+            async function checkWorkflow() {
+                const workflow = currentWorkflow();
+                if (!workflow) { notify("Select a workflow first."); return; }
+
+                const supported = workflow.supported_inputs;
+                const body = { workflow_id: workflow.id };
+                const put = (key, value) => {
+                    if (value !== null && value !== "" && supported.includes(key)) body[key] = value;
+                };
+                put("prompt", $("#comfy-prompt").value.trim());
+                put("checkpoint", $("#comfy-checkpoint").value);
+                put("lora_name", $("#comfy-lora").value);
+
+                const box = $("#comfy-check-report");
+                box.style.display = "block";
+                $("#comfyck-verdict").textContent = "checking…";
+                try {
+                    const report = await jsonPost("/comfyui/validate-generation", body);
+                    $("#comfyck-verdict").textContent = report.valid ? "✓ Ready to generate" : "✗ Problems found";
+                    $("#comfyck-verdict").style.color = report.valid ? "#3fa66a" : "#d95c5c";
+                    const list = $("#comfyck-checks");
+                    list.innerHTML = "";
+                    (report.checks || []).forEach(check => {
+                        const li = document.createElement("li");
+                        li.textContent = `${check.passed ? "✓" : "✗"} ${check.name}: ${check.detail}`;
+                        if (!check.passed) li.style.color = "#d95c5c";
+                        list.appendChild(li);
+                    });
+                } catch (error) {
+                    box.style.display = "none";
+                    notify(error.message);
+                }
             }
 
             // ---------- ComfyUI: generate ----------
@@ -3013,6 +3186,30 @@
                     }
                 } catch (_) { /* log is optional */ }
 
+                // Run history (provenance: which dataset/settings made which LoRA)
+                try {
+                    const runs = await api(`/loras/projects/${ws.currentProjectId}/runs`);
+                    const list = $("#tr-runs");
+                    if (!runs.count) {
+                        list.innerHTML = `<span class="field-hint">No runs recorded yet.</span>`;
+                    } else {
+                        list.innerHTML = runs.runs.map(run => `
+                            <div class="item-row">
+                                <div class="item-main">
+                                    <div class="item-name"><span class="badge ${run.status}">${escapeHtml(run.status)}</span>
+                                        ${escapeHtml(run.started_at)}</div>
+                                    <div class="item-meta">
+                                        ${run.dataset_image_count} images · rank ${escapeHtml(String((run.config && run.config.network && run.config.network.linear) || "?"))}
+                                        · ${escapeHtml(run.base_model.split("/").pop() || run.base_model)}
+                                        ${run.preflight_verdict ? ` · preflight: ${escapeHtml(run.preflight_verdict)}` : ""}
+                                    </div>
+                                    ${run.lora_filename ? `<div class="item-meta">→ ${escapeHtml(run.lora_filename)} (${(run.lora_size_bytes / 1024 / 1024).toFixed(0)} MB)</div>` : ""}
+                                    ${run.error ? `<div class="item-meta" style="color:#d95c5c">${escapeHtml(run.error.substring(0, 120))}</div>` : ""}
+                                </div>
+                            </div>`).join("");
+                    }
+                } catch (_) { /* history is optional */ }
+
                 if (!status.running) { clearInterval(ws.trainPoll); ws.trainPoll = null; loadProjects(); loadLibrary(); }
             }
 
@@ -3106,6 +3303,7 @@
                 tab.addEventListener("click", () => switchPanel(tab.dataset.panel)));
 
             $("#comfy-test-btn").addEventListener("click", refreshComfyStatus);
+            $("#comfy-check-btn").addEventListener("click", checkWorkflow);
             $("#comfy-workflow").addEventListener("change", onWorkflowChange);
             $("#comfy-generate-btn").addEventListener("click", generate);
             $("#comfy-import-btn").addEventListener("click", () => $("#comfy-import-input").click());

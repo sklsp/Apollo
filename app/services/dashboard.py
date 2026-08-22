@@ -123,8 +123,6 @@ def _job_summary(job: Any) -> dict[str, Any]:
 
 def _health_summary() -> dict[str, Any]:
     """Lightweight dependency probe with per-dependency status."""
-    import requests
-
     health: dict[str, Any] = {}
 
     health["ollama"] = _probe(f"{settings.ollama_base_url}/api/version")
@@ -139,6 +137,8 @@ def _health_summary() -> dict[str, Any]:
 
 
 def _probe(url: str, timeout: float = 2.0) -> dict[str, Any]:
+    import requests
+
     try:
         response = requests.get(url, timeout=timeout)
         return {"online": response.status_code < 500, "url": url}
