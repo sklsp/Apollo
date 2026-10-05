@@ -38,7 +38,6 @@ TUNNEL_URL_PATTERN = re.compile(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com")
 
 CLOUDFLARED_CANDIDATES = [
     os.environ.get("CLOUDFLARED_PATH"),
-    r"C:\Users\Jayde\Desktop\cloudflared-windows-amd64.exe",
     r"C:\cloudflared\cloudflared-windows-amd64.exe",
     "cloudflared-windows-amd64.exe",
     "cloudflared",
@@ -76,8 +75,7 @@ def _resolve_cloudflared() -> str:
         except OSError:
             continue
     raise FileNotFoundError(
-        "cloudflared not found. Set CLOUDFLARED_PATH or install cloudflared.\n"
-        "Expected: C:\\Users\\Jayde\\Desktop\\cloudflared-windows-amd64.exe"
+        "cloudflared not found. Set CLOUDFLARED_PATH or install cloudflared."
     )
 
 

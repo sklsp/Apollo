@@ -1,8 +1,8 @@
 # Apollo
 
-**A unified local AI workspace — documents, image generation, datasets, LoRA training, and ComfyUI. No cloud required.**
+**A unified local AI workspace, documents, image generation, datasets, LoRA training, and ComfyUI. No cloud required.**
 
-Apollo connects the whole local AI workflow in one application: upload PDF, DOCX, or TXT files and ask questions with RAG context backed by a persistent vector index. Generate images through a local ComfyUI instance. Build training datasets, caption them with a local vision model, validate them for duplicates and quality issues, then train LoRA models with the Ostris AI Toolkit — with hardware-aware preflight checks against your actual GPU. Every generated asset keeps its provenance. Built with FastAPI, Ollama, FAISS, ComfyUI, and AI Toolkit.
+Apollo connects the whole local AI workflow in one application: upload PDF, DOCX, or TXT files and ask questions with RAG context backed by a persistent vector index. Generate images through a local ComfyUI instance. Build training datasets, caption them with a local vision model, validate them for duplicates and quality issues, then train LoRA models with the Ostris AI Toolkit, with hardware-aware preflight checks against your actual GPU. Every generated asset keeps its provenance. Built with FastAPI, Ollama, FAISS, ComfyUI, and AI Toolkit.
 
 <p align="center">
   <img src="https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
@@ -23,12 +23,12 @@ Apollo is a full AI workspace that runs entirely on your machine:
 | Capability | Description |
 |------------|-------------|
 | **Chat** | Conversational AI powered by local Ollama models |
-| **Document RAG** | Upload files, embed chunks, retrieve relevant context at query time — the FAISS index persists across restarts |
+| **Document RAG** | Upload files, embed chunks, retrieve relevant context at query time, the FAISS index persists across restarts |
 | **Prompt library** | Save, edit, and reuse templates with `{input}` variables |
-| **Session memory** | Multiple chats with per-session history and settings — persisted across restarts |
+| **Session memory** | Multiple chats with per-session history and settings, persisted across restarts |
 | **ComfyUI generation** | Run local ComfyUI workflows from the dashboard, with importable workflow JSON and pre-generation validation |
 | **LoRA Studio** | Build datasets, caption them with a local vision model, train LoRAs via Ostris AI Toolkit |
-| **Dataset quality control** | One-click validation: exact + near duplicates (multi-signal), broken images, caption coverage, 0–100 quality score |
+| **Dataset quality control** | One-click validation: exact + near duplicates (multi-signal), broken images, caption coverage, 0-100 quality score |
 | **Training presets** | Character / Style / Product / Concept starting points, plus hardware-aware conservative/balanced/quality variants |
 | **Hardware preflight** | Detects your GPU/VRAM/RAM/disk and classifies a training config as safe / heavy / risky before you start |
 | **One-click LoRA testing** | After training, jump straight into a prefilled ComfyUI generation with the LoRA loaded |
@@ -43,7 +43,7 @@ Each module is independent: **chat and RAG keep working when ComfyUI, Ollama, or
 python launcher.py
 ```
 
-Open **http://localhost:8000** — or use the auto-generated Cloudflare tunnel URL for a public demo.
+Open **http://localhost:8000**, or use the auto-generated Cloudflare tunnel URL for a public demo.
 
 ---
 
@@ -53,7 +53,7 @@ Open **http://localhost:8000** — or use the auto-generated Cloudflare tunnel U
 
 ### Basic Chat
 
-Simple conversation with a local LLM — fast, private, and fully offline-capable.
+Simple conversation with a local LLM, fast, private, and fully offline-capable.
 
 ![Basic chat demo](images/chat.gif)
 
@@ -103,11 +103,11 @@ Edit and delete saved prompts from the library panel. Templates sync via the RES
 
 This project demonstrates a full local AI system combining:
 
-- **Retrieval-Augmented Generation (RAG)** — semantic search over uploaded documents
-- **Local LLM inference** — no cloud API dependency for chat or embeddings
-- **Document understanding pipeline** — PDF, DOCX, and TXT extraction with chunking and indexing
-- **Real-time chat UI** — sessions, prompt library, and optional document mode
-- **Production-style API architecture** — modular services, dependency injection, OpenAPI docs
+- **Retrieval-Augmented Generation (RAG)**, semantic search over uploaded documents
+- **Local LLM inference**, no cloud API dependency for chat or embeddings
+- **Document understanding pipeline**, PDF, DOCX, and TXT extraction with chunking and indexing
+- **Real-time chat UI**, sessions, prompt library, and optional document mode
+- **Production-style API architecture**, modular services, dependency injection, OpenAPI docs
 
 Built as a portfolio-ready example of how to ship a private, self-hosted AI knowledge assistant.
 
@@ -116,7 +116,7 @@ Built as a portfolio-ready example of how to ship a private, self-hosted AI know
 ## Architecture
 
 ```
-Frontend (Vanilla JS Dashboard — Home · Chat · Docs · ComfyUI · LoRA Studio)
+Frontend (Vanilla JS Dashboard, Home · Chat · Docs · ComfyUI · LoRA Studio)
         │
         ▼
 FastAPI Backend
@@ -144,7 +144,7 @@ FastAPI Backend
                                                     ComfyUI inference with LoRA
 ```
 
-The three modules are decoupled — routes call services, services call a client
+The three modules are decoupled, routes call services, services call a client
 or process adapter. Nothing in the document pipeline imports ComfyUI code.
 
 **Request flow (chat with documents):**
@@ -190,13 +190,13 @@ ollama pull llama3.2
 ollama pull nomic-embed-text
 ```
 
-**Optional — only needed for the new AI generation features:**
+**Optional, only needed for the new AI generation features:**
 
 - [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for image generation
 - [Ostris AI Toolkit](https://github.com/ostris/ai-toolkit) for LoRA training
 - A vision model for AI captioning: `ollama pull llava`
 
-Everything else keeps working if these are absent — the dashboard shows a clear
+Everything else keeps working if these are absent, the dashboard shows a clear
 "unavailable" card instead of failing.
 
 ### Install
@@ -269,7 +269,7 @@ variables take precedence). Copy `.env.example` to `.env` to start.
 **Training is disabled unless both `AI_TOOLKIT_PATH` and `AI_TOOLKIT_PYTHON` are
 set and the files actually exist.** The rest of the app is unaffected.
 
-**Remote Ollama (LAN)** — Windows PowerShell:
+**Remote Ollama (LAN)**, Windows PowerShell:
 
 ```powershell
 $env:OLLAMA_BASE_URL = "http://192.168.1.50:11434"
@@ -375,9 +375,9 @@ Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 }
 ```
 
-- `use_documents: true` — retrieve relevant chunks from the vector store (default)
-- `use_documents: false` — pure LLM chat, no document context
-- `prompt_id` — optional; merges a saved template (`{input}` replaced with `prompt`)
+- `use_documents: true`, retrieve relevant chunks from the vector store (default)
+- `use_documents: false`, pure LLM chat, no document context
+- `prompt_id`, optional; merges a saved template (`{input}` replaced with `prompt`)
 
 ---
 
@@ -386,7 +386,7 @@ Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 ### Document upload flow
 
 1. File is saved temporarily on disk
-2. Text is extracted via unified parser (`extract_text`) — PDF (pypdf), DOCX (python-docx), TXT
+2. Text is extracted via unified parser (`extract_text`), PDF (pypdf), DOCX (python-docx), TXT
 3. Full text is stored in `DocumentService`
 4. Text is chunked, embedded, and indexed in FAISS via `RAGService`
 5. On chat (when `use_documents` is true), top-k similar chunks are injected into the LLM prompt
@@ -464,7 +464,7 @@ Apollo/
 │   ├── smoke_preflight.py        # Live training-preflight demo
 │   └── smoke_rag_persistence.py  # Restart-survival verification for the index
 ├── workflows/                    # ComfyUI workflows + node-input mappings
-├── tests/                        # Test suite (244 tests) + legacy debug scripts
+├── tests/                        # Test suite (250 tests) + legacy debug scripts
 ├── data/                         # Documents, sessions, jobs, LoRA projects, generated images, rag index
 ├── images/                       # Feature demo GIFs (README showcase)
 ├── launcher.py                   # One-command startup (API + tunnel)
@@ -479,7 +479,7 @@ Apollo/
 ## AI Generation & LoRA Studio
 
 Two optional modules that turn the document workspace into a local AI creation
-platform. Both are independent — if either is missing, chat and RAG are unaffected.
+platform. Both are independent, if either is missing, chat and RAG are unaffected.
 
 ### 1. ComfyUI setup
 
@@ -523,18 +523,18 @@ The mapping is what keeps node IDs out of the code:
 }
 ```
 
-**Importing your own:** in ComfyUI use *Workflow → Export (API)* — not the plain
+**Importing your own:** in ComfyUI use *Workflow → Export (API)*, not the plain
 save, which produces a UI-format file the importer will reject with an explanatory
 message. Then **Import workflow JSON** in the dashboard. Inputs are auto-detected:
 prompts are found by following the sampler's own `positive`/`negative` links, so
 it is a lookup rather than a guess. Edit the `.map.json` afterwards to adjust.
 
-The UI only enables controls a workflow actually maps — pick a workflow without a
+The UI only enables controls a workflow actually maps, pick a workflow without a
 LoRA node and the LoRA selector greys out.
 
 ### 3. Ostris AI Toolkit setup
 
-Install [AI Toolkit](https://github.com/ostris/ai-toolkit) **separately** — it is
+Install [AI Toolkit](https://github.com/ostris/ai-toolkit) **separately**, it is
 never vendored into this repo:
 
 ```bash
@@ -563,28 +563,28 @@ moves, `app/services/lora_training_service.py` is the only file to update.
 
 ### 4. End-to-end: train a LoRA and use it
 
-1. **LoRA Studio → Projects** — create a project, choose an architecture
+1. **LoRA Studio → Projects**, create a project, choose an architecture
    (`sdxl`, `flux`, `qwen_image`, `krea2`) and a trigger word.
-2. **Dataset** — drag in PNG/JPG images. Each gets a matching `.txt` caption file,
+2. **Dataset**, drag in PNG/JPG images. Each gets a matching `.txt` caption file,
    which is the pairing AI Toolkit expects:
    ```
    data/loras/<project>/dataset/image001.png
    data/loras/<project>/dataset/image001.txt
    ```
-3. **Captions** — write them by hand, or click **Generate captions with AI** to
+3. **Captions**, write them by hand, or click **Generate captions with AI** to
    run a local Ollama vision model over the dataset. Generated captions are saved
    for review; **captions you edited by hand are never overwritten** unless you
    tick *Overwrite my edits*.
-4. **Training** — set steps, learning rate, rank/alpha, resolution. **Preview
+4. **Training**, set steps, learning rate, rank/alpha, resolution. **Preview
    config** writes `config/training.yml` so you can inspect it first. **Start
    training** launches AI Toolkit as a subprocess.
-5. **Progress** — step count, loss and the live log are parsed from AI Toolkit's
+5. **Progress**, step count, loss and the live log are parsed from AI Toolkit's
    output. When step info is not parseable the UI says *"Training in progress"*
    rather than inventing a percentage. **Stop** terminates only that run's process
    tree.
-6. **Library** — the finished `.safetensors` is detected automatically. Files are
+6. **Library**, the finished `.safetensors` is detected automatically. Files are
    validated by reading the safetensors header, so a renamed file is not listed.
-7. **Use in ComfyUI** — pick a LoRA in the library and press *Use in ComfyUI*. It
+7. **Use in ComfyUI**, pick a LoRA in the library and press *Use in ComfyUI*. It
    selects a LoRA-capable workflow, sets the LoRA, and prefills the trigger word.
 
 > ComfyUI can only load LoRAs that live in its own `models/loras` folder. Copy the
@@ -594,7 +594,7 @@ moves, `app/services/lora_training_service.py` is the only file to update.
 ### Jobs
 
 Generation and training are long-running, so neither blocks a request. Both use
-one job abstraction — `POST` returns a `job_id` immediately, then poll:
+one job abstraction, `POST` returns a `job_id` immediately, then poll:
 
 ```bash
 curl http://localhost:8000/jobs?job_type=comfyui_generation
@@ -623,7 +623,7 @@ Local-first does not mean unguarded:
 - Filenames sanitised; directory components stripped
 - Every user-supplied path goes through a traversal guard that rejects `..`,
   absolute paths, drive letters and UNC prefixes
-- Subprocesses are launched with argument arrays — never `shell=True`, and no
+- Subprocesses are launched with argument arrays, never `shell=True`, and no
   shell interpolation of user input
 - The browser is served images by name from managed folders; raw filesystem paths
   are never exposed
@@ -638,7 +638,7 @@ Local-first does not mean unguarded:
 - Documents, sessions, jobs, LoRA projects, workflows and generated images all persist on disk
 - Upload debug logs appear in the server console: `[UPLOAD] filename`, `extracted chars`, `rag chunks indexed`
 - Utility scripts: `python scripts/verify_system.py`, `python scripts/diagnostics_ollama.py`
-- Run the tests with `python -m pytest` (244 tests); stress tests: `pytest tests/test_stress.py -m slow`
+- Run the tests with `python -m pytest` (250 tests); stress tests: `pytest tests/test_stress.py -m slow`
 - Log prefixes: `[COMFYUI]`, `[COMFYUI JOB]`, `[LORA]`, `[LORA TRAINING]`, `[DATASET]`, `[RAG]`, `[RUN HISTORY]`
 - `tests/` also contains standalone diagnostic scripts (`test_endpoints.py`,
   `test_ollama_detailed.py`, …) that predate the suite. They print at import time

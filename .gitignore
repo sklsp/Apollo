@@ -267,3 +267,6 @@ data/jobs.json
 
 # Extra venvs
 .venv-1/
+
+# Runtime state (created by the app at startup)
+data/
