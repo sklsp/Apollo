@@ -5,6 +5,7 @@
 Apollo connects the whole local AI workflow in one application: upload PDF, DOCX, or TXT files and ask questions with RAG context backed by a persistent vector index. Generate images through a local ComfyUI instance. Build training datasets, caption them with a local vision model, validate them for duplicates and quality issues, then train LoRA models with the Ostris AI Toolkit, with hardware-aware preflight checks against your actual GPU. Every generated asset keeps its provenance. Built with FastAPI, Ollama, FAISS, ComfyUI, and AI Toolkit.
 
 <p align="center">
+  <a href="https://github.com/sklsp/Apollo/actions/workflows/ci.yml"><img src="https://github.com/sklsp/Apollo/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/Ollama-000000?style=flat" alt="Ollama" />
   <img src="https://img.shields.io/badge/FAISS-0466C8?style=flat" alt="FAISS" />

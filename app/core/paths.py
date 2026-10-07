@@ -55,7 +55,7 @@ def sanitize_filename(filename: str, *, default: str = "file") -> str:
 def safe_join(root: str | Path, *parts: str) -> Path:
     """Join ``parts`` under ``root``, refusing anything that escapes it.
 
-    Rejects absolute paths, drive letters, UNC prefixes and ``..`` traversal —
+    Rejects absolute paths, drive letters, UNC prefixes, backslashes and ``..`` traversal —
     checked after resolution, so symlinks and ``a/../../b`` are caught too.
     """
     base = Path(root).resolve()
@@ -65,6 +65,9 @@ def safe_join(root: str | Path, *parts: str) -> Path:
             raise UnsafePathError("Empty path component")
         if os.path.isabs(part) or re.match(r"^[A-Za-z]:", part) or part.startswith("\\\\"):
             raise UnsafePathError(f"Absolute paths are not allowed: {part!r}")
+        if "\\" in part:
+            # a separator on Windows only; refused everywhere so a data folder stays safe on either OS
+            raise UnsafePathError(f"Backslashes are not allowed: {part!r}")
 
     candidate = base.joinpath(*parts)
     # strict=False: the target may not exist yet (we are often creating it).
