@@ -254,8 +254,8 @@ python main.py --api
 | `COMFYUI_WORKFLOW_DIR` | `./workflows` | Where workflow JSON + mappings are stored |
 | `COMFYUI_LORA_DIR` | *(empty)* | ComfyUI's `models/loras`, so manually added LoRAs appear in the library |
 | `COMFYUI_GENERATION_TIMEOUT` | `600` | Seconds before a generation job gives up |
-| `AI_TOOLKIT_PATH` | *(empty)* | Ostris AI Toolkit checkout, e.g. `W:/AI-Toolkit` |
-| `AI_TOOLKIT_PYTHON` | *(empty)* | That toolkit's interpreter, e.g. `W:/AI-Toolkit/venv/Scripts/python.exe` |
+| `AI_TOOLKIT_PATH` | *(empty)* | Ostris AI Toolkit checkout, e.g. `C:/ai-toolkit` |
+| `AI_TOOLKIT_PYTHON` | *(empty)* | That toolkit's interpreter, e.g. `C:/ai-toolkit/venv/Scripts/python.exe` |
 | `LORA_DATA_DIR` | `./data/loras` | LoRA projects, datasets, configs, outputs |
 | `GENERATED_DIR` | `./data/generated` | Images pulled back from ComfyUI |
 | `DATA_DIR` | `./data` | Where `documents.json` / `sessions.json` persistence lives |
@@ -548,8 +548,8 @@ pip install -r requirements.txt
 Then in `.env` (forward slashes are fine on Windows):
 
 ```text
-AI_TOOLKIT_PATH=W:/AI-Toolkit
-AI_TOOLKIT_PYTHON=W:/AI-Toolkit/venv/Scripts/python.exe
+AI_TOOLKIT_PATH=C:/ai-toolkit
+AI_TOOLKIT_PYTHON=C:/ai-toolkit/venv/Scripts/python.exe
 ```
 
 Both must exist or training stays disabled with a clear message. Verify with:
