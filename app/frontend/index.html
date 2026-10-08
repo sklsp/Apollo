@@ -54,7 +54,7 @@
             width: 40px;
             height: 40px;
             border-radius: 8px;
-            background: #10a37f;
+            background: #0d8467;
             border: none;
             color: white;
             cursor: pointer;
@@ -277,7 +277,7 @@
             padding: 8px 12px;
             border: none;
             border-radius: 8px;
-            background: #4a9eff;
+            background: #006fef;
             color: white;
             font-size: 12px;
             cursor: pointer;
@@ -421,7 +421,7 @@
 
         .document-context-title {
             font-weight: 600;
-            color: #10a37f;
+            color: #11ad87;
             margin-bottom: 4px;
         }
 
@@ -526,7 +526,7 @@
             font-size: 13px;
             font-weight: 600;
             margin-bottom: 12px;
-            color: #10a37f;
+            color: #11ad87;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -558,13 +558,13 @@
 
         .upload-text {
             font-size: 12px;
-            color: #10a37f;
+            color: #11ad87;
             margin-bottom: 8px;
         }
 
         .upload-hint {
             font-size: 11px;
-            color: #666;
+            color: #999;
         }
 
         .file-input {
@@ -607,7 +607,7 @@
         .doc-list-item-btn {
             background: none;
             border: none;
-            color: #10a37f;
+            color: #11ad87;
             cursor: pointer;
             font-size: 12px;
             padding: 4px 8px;
@@ -643,7 +643,7 @@
 
         .prompt-list-item-name {
             font-weight: 600;
-            color: #10a37f;
+            color: #11ad87;
             margin-bottom: 4px;
         }
 
@@ -659,7 +659,7 @@
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: #666;
+            color: #999;
             text-align: center;
         }
 
@@ -795,7 +795,7 @@
         }
 
         .nav-item:hover { background: #222; color: #ececec; }
-        .nav-item.active { background: #1f2f2b; border-color: #10a37f; color: #10a37f; }
+        .nav-item.active { background: #1f2f2b; border-color: #10a37f; color: #11ad87; }
         .nav-item-icon { font-size: 18px; line-height: 1; }
 
         .nav-status {
@@ -814,7 +814,7 @@
             align-items: center;
             gap: 5px;
             font-size: 9px;
-            color: #777;
+            color: #999;
             width: 62px;
         }
 
@@ -828,6 +828,7 @@
         .status-dot.online { background: #10a37f; box-shadow: 0 0 6px #10a37f88; }
         .status-dot.offline { background: #ff6b6b; }
 
+        .views { flex: 1; min-width: 0; display: flex; }
         .view { display: none; flex: 1; min-width: 0; }
         .view.active { display: flex; }
 
@@ -849,7 +850,7 @@
             flex-wrap: wrap;
         }
 
-        .studio-title { font-size: 18px; font-weight: 600; }
+        .studio-title { font-size: 18px; font-weight: 600; margin: 0; }
 
         .studio-body {
             flex: 1;
@@ -902,13 +903,13 @@
         .field select:focus,
         .field textarea:focus { outline: none; border-color: #10a37f; }
         .field textarea { min-height: 72px; resize: vertical; }
-        .field-hint { font-size: 11px; color: #777; }
+        .field-hint { font-size: 11px; color: #999; }
 
         .btn {
             padding: 9px 16px;
             border: none;
             border-radius: 8px;
-            background: #10a37f;
+            background: #0d8467;
             color: #fff;
             font-size: 13px;
             font-weight: 600;
@@ -948,7 +949,7 @@
             cursor: pointer;
         }
         .tab:hover { background: #222; color: #ececec; }
-        .tab.active { background: #10a37f; border-color: #10a37f; color: #fff; font-weight: 600; }
+        .tab.active { background: #0d8467; border-color: #10a37f; color: #fff; font-weight: 600; }
 
         .panel { display: none; }
         .panel.active { display: block; }
@@ -988,7 +989,7 @@
         }
         .badge.queued { background: #3a3520; color: #e0c070; }
         .badge.running { background: #1f2f3a; color: #4a9eff; }
-        .badge.completed { background: #1f2f2b; color: #10a37f; }
+        .badge.completed { background: #1f2f2b; color: #11ad87; }
         .badge.failed { background: #3a2020; color: #ff6b6b; }
         .badge.cancelled { background: #2a2a2a; color: #999; }
         .badge.not_started { background: #2a2a2a; color: #999; }
@@ -1045,7 +1046,7 @@
         .item-row.selected { border-color: #10a37f; background: #131c19; }
         .item-main { min-width: 0; flex: 1; }
         .item-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
-        .item-meta { font-size: 11px; color: #777; }
+        .item-meta { font-size: 11px; color: #999; }
         .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
         .dataset-grid {
@@ -1091,7 +1092,7 @@
         }
         .tile-name {
             font-size: 10px;
-            color: #777;
+            color: #999;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -1100,7 +1101,7 @@
         .empty-state {
             padding: 36px 20px;
             text-align: center;
-            color: #666;
+            color: #999;
             font-size: 13px;
         }
 
@@ -1153,6 +1154,7 @@
             </div>
         </nav>
 
+        <main class="views">
         <!-- ============ VIEW: HOME (unified dashboard) ============ -->
         <div class="view" id="view-home">
             <div style="padding:24px;max-width:1100px;margin:0 auto;overflow-y:auto;height:100vh">
@@ -1194,7 +1196,7 @@
         <!-- ============ VIEW: CHAT (existing workspace, unchanged) ============ -->
         <div class="view active" id="view-chat">
         <!-- LEFT SIDEBAR -->
-        <aside class="sidebar">
+        <aside class="sidebar" aria-label="Conversations and documents">
             <div class="sidebar-header">
                 <h1>Apollo</h1>
                 <button class="new-chat-btn" title="New Chat">+</button>
@@ -1220,7 +1222,7 @@
         </aside>
 
         <!-- MAIN CHAT AREA -->
-        <main class="chat-area">
+        <section class="chat-area" aria-label="Chat">
             <div class="chat-header">
                 <div class="chat-header-title">Chat</div>
                 <div class="chat-controls">
@@ -1228,7 +1230,7 @@
                         <input type="checkbox" class="use-documents-toggle" checked />
                         Use Documents
                     </label>
-                    <select class="prompt-select" title="Apply a saved prompt template">
+                    <select class="prompt-select" title="Apply a saved prompt template" aria-label="Prompt template">
                         <option value="">No prompt template</option>
                     </select>
                     <button class="clear-btn">Clear Chat</button>
@@ -1241,10 +1243,10 @@
                     <button class="send-btn">↑</button>
                 </div>
             </div>
-        </main>
+        </section>
 
         <!-- RIGHT PANEL -->
-        <aside class="right-panel">
+        <aside class="right-panel" aria-label="Tools and resources">
             <div class="panel-header">Tools & Resources</div>
 
             <!-- Document Upload -->
@@ -1276,7 +1278,7 @@
         <div class="view" id="view-comfyui">
             <div class="studio">
                 <div class="studio-header">
-                    <div class="studio-title">ComfyUI &mdash; Generate</div>
+                    <h1 class="studio-title">ComfyUI &mdash; Generate</h1>
                     <div class="chat-controls">
                         <span id="comfy-conn" class="item-meta">Checking&hellip;</span>
                         <button class="btn secondary small" id="comfy-test-btn">Test connection</button>
@@ -1385,7 +1387,7 @@
         <div class="view" id="view-lora">
             <div class="studio">
                 <div class="studio-header">
-                    <div class="studio-title">LoRA Studio</div>
+                    <h1 class="studio-title">LoRA Studio</h1>
                     <div class="tabs">
                         <button class="tab active" data-panel="projects">Projects</button>
                         <button class="tab" data-panel="dataset">Dataset</button>
@@ -1609,6 +1611,7 @@
                 </div>
             </div>
         </div><!-- /view-lora -->
+        </main>
     </div>
 
     <script>
@@ -1990,7 +1993,7 @@
             if (state.documents.length === 0) {
                 const empty = document.createElement("div");
                 empty.style.textAlign = "center";
-                empty.style.color = "#666";
+                empty.style.color = "#999";
                 empty.style.fontSize = "12px";
                 empty.textContent = "No documents uploaded";
                 DOM.docListContainer.appendChild(empty);
@@ -2449,8 +2452,9 @@
                 if (ollamaBannerShown) return;
                 ollamaBannerShown = true;
                 const detail = error && error.detail;
-                const banner = document.createElement("div");
+                const banner = document.createElement("section");
                 banner.className = "banner";
+                banner.setAttribute("aria-label", "Service status");
                 banner.style.cssText = "margin:12px;padding:14px;border:1px solid #7a5c20;background:#2a2313;border-radius:8px;font-size:13px;line-height:1.6";
                 const steps = (detail && detail.how_to_fix) || [];
                 const unavailable = (detail && detail.unavailable_features) || ["Chat", "RAG"];
@@ -2463,8 +2467,8 @@
                     ${working.length ? `<div><strong>Still working:</strong> ${escapeHtml(working.join(", "))}</div>` : ""}
                     ${steps.length ? `<div style="margin-top:8px"><strong>To fix:</strong><ol style="margin:4px 0 0 18px;padding:0">${steps.map(s => `<li><code>${escapeHtml(s)}</code></li>`).join("")}</ol></div>` : ""}
                     <button class="btn secondary small" style="margin-top:10px" onclick="this.parentElement.remove()">Dismiss</button>`;
-                const nav = document.querySelector(".status-dots") || document.body;
-                nav.parentElement.insertBefore(banner, nav.parentElement.firstChild);
+                // first thing in <body>: the old ".status-dots" anchor no longer exists, so it landed before <head>
+                document.body.prepend(banner);
             }
 
             // ---------- ComfyUI: status ----------
@@ -2589,7 +2593,9 @@
                 gate("#comfy-lora", "lora_name");
                 gate("#comfy-lora-model", "lora_strength_model");
                 gate("#comfy-lora-clip", "lora_strength_clip");
-                $("#comfy-lora-card").style.opacity = supported.includes("lora_name") ? "1" : "0.5";
+                const loraCard = $("#comfy-lora-card"), loraOk = supported.includes("lora_name");
+                loraCard.style.opacity = loraOk ? "1" : "0.5";
+                loraCard.setAttribute("aria-disabled", String(!loraOk));
             }
 
             // ---------- ComfyUI: pre-generation check ----------
