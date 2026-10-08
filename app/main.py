@@ -101,6 +101,18 @@ def create_app(service: object | None = None) -> FastAPI:
             status_code=401,
         )
 
+    # ============ SECURITY HEADERS ============
+    # Added after the token check, so it wraps it and the 401 and the redirect get them too.
+    # The CSP holds only directives that cannot break the dashboard (it runs inline scripts).
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'; base-uri 'self'; object-src 'none'")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        return response
+
     # ============ INITIALIZE SERVICES ============
     app.state.llm_service = service or LLMService()
     app.state.memory_service = MemoryService()

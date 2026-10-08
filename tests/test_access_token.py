@@ -84,3 +84,14 @@ def test_other_sites_cannot_read_responses_with_the_cookie(make_client, monkeypa
         response = client.get("/prompts", headers={"Origin": "https://evil.example", "Cookie": f"apollo_access={TOKEN}"})
         assert response.headers.get("access-control-allow-origin") != "https://evil.example"
         assert response.headers.get("access-control-allow-credentials") is None
+
+
+def test_security_headers_also_on_the_401_and_the_redirect(make_client, monkeypatch):
+    monkeypatch.setenv("APOLLO_ACCESS_TOKEN", TOKEN)
+    with make_client() as client:
+        for response in (client.get("/"), client.get(f"/?token={TOKEN}", follow_redirects=False),
+                         client.get("/", headers={"X-Apollo-Token": TOKEN})):
+            assert response.headers["x-content-type-options"] == "nosniff"
+            assert response.headers["x-frame-options"] == "DENY"
+            assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
+            assert response.headers["referrer-policy"] == "no-referrer"
