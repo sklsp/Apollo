@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apollo — AI Workspace</title>
+    <title>Apollo: AI Workspace</title>
     <style>
         * {
             margin: 0;
@@ -1278,7 +1278,7 @@
         <div class="view" id="view-comfyui">
             <div class="studio">
                 <div class="studio-header">
-                    <h1 class="studio-title">ComfyUI &mdash; Generate</h1>
+                    <h1 class="studio-title">ComfyUI: Generate</h1>
                     <div class="chat-controls">
                         <span id="comfy-conn" class="item-meta">Checking&hellip;</span>
                         <button class="btn secondary small" id="comfy-test-btn">Test connection</button>
@@ -1440,7 +1440,7 @@
                         <!-- DATASET -->
                         <div class="panel" data-panel="dataset">
                             <div class="card">
-                                <div class="card-title">Dataset &mdash; <span id="ds-project-name">no project selected</span></div>
+                                <div class="card-title">Dataset: <span id="ds-project-name">no project selected</span></div>
                                 <div id="ds-controls" style="display:none">
                                     <div class="field-row">
                                         <div class="field">
@@ -1565,7 +1565,7 @@
                                             <button class="btn secondary" id="tr-preview">Preview config</button>
                                         </div>
                                         <div id="tr-preflight-report" style="display:none;margin-top:12px;padding:12px;border:1px solid #333;border-radius:8px;font-size:13px;line-height:1.7">
-                                            <div style="font-weight:600;margin-bottom:6px">Training preflight — <span id="trpf-verdict"></span></div>
+                                            <div style="font-weight:600;margin-bottom:6px">Training preflight: <span id="trpf-verdict"></span></div>
                                             <div id="trpf-summary" style="margin-bottom:8px"></div>
                                             <ul id="trpf-checks" style="margin:0;padding-left:18px"></ul>
                                             <ul id="trpf-recs" style="margin:8px 0 0 18px;padding:0;color:#d9b96a"></ul>
@@ -2335,7 +2335,7 @@
                     data = await api("/dashboard");
                 } catch (error) { notify(error.message); return; }
 
-                $("#dash-updated").textContent = `Updated ${data.generated_at} — refreshes every 30s while open`;
+                $("#dash-updated").textContent = `Updated ${data.generated_at} · refreshes every 30s while open`;
 
                 const docs = data.documents || {};
                 $("#dash-docs").textContent = docs.count ?? "—";
@@ -2360,7 +2360,7 @@
                         ? `<span class="status-dot online" style="display:inline-block"></span>`
                         : `<span class="status-dot offline" style="display:inline-block"></span>`;
                     return `<div>${dot} <strong>${escapeHtml(name)}</strong>
-                        <span class="field-hint">— ${online ? "online" : "offline"} · needed for ${escapeHtml(deps)}</span></div>`;
+                        <span class="field-hint">· ${online ? "online" : "offline"} · needed for ${escapeHtml(deps)}</span></div>`;
                 }).join("");
 
                 // Active jobs
@@ -2484,7 +2484,7 @@
                         const gpu = (status.devices || [])[0];
                         const vram = gpu && gpu.vram_free
                             ? ` &middot; ${(gpu.vram_free / 1024 ** 3).toFixed(1)} GB VRAM free` : "";
-                        label.innerHTML = `<span class="status-dot online" style="display:inline-block"></span> Connected &mdash; v${escapeHtml(status.version || "?")}${vram}`;
+                        label.innerHTML = `<span class="status-dot online" style="display:inline-block"></span> Connected · v${escapeHtml(status.version || "?")}${vram}`;
                         banner.classList.add("hidden");
                         fillSelect($("#comfy-checkpoint"), status.checkpoints, "Workflow default");
                         fillSelect($("#comfy-lora"), status.loras, "None");
@@ -2955,7 +2955,7 @@
                     const job = await jsonPost(`/loras/projects/${ws.currentProjectId}/caption-jobs`, {
                         overwrite: $("#ds-overwrite").checked
                     });
-                    $("#ds-caption-hint").textContent = "Captioning runs in the background — you can keep working. Watch it in the job list below.";
+                    $("#ds-caption-hint").textContent = "Captioning runs in the background, so you can keep working. Watch it in the job list below.";
                     pollCaptionJob(job.id);
                 } catch (error) {
                     notify(error.message);
@@ -3009,7 +3009,7 @@
                     list.innerHTML = "";
                     report.findings.slice(0, 30).forEach(finding => {
                         const li = document.createElement("li");
-                        li.textContent = `${finding.kind}: ${finding.filename}${finding.detail ? " — " + finding.detail : ""}`;
+                        li.textContent = `${finding.kind}: ${finding.filename}${finding.detail ? ": " + finding.detail : ""}`;
                         list.appendChild(li);
                     });
                     if (report.findings.length > 30) {
@@ -3163,7 +3163,7 @@
 
                 $("#tr-status").innerHTML =
                     `<span class="badge ${status.status}">${escapeHtml(status.status)}</span>
-                     <span>${escapeHtml(status.message || "")}${status.error ? " &mdash; " + escapeHtml(status.error) : ""}</span>`;
+                     <span>${escapeHtml(status.message || "")}${status.error ? ": " + escapeHtml(status.error) : ""}</span>`;
 
                 const bar = $("#tr-progress");
                 if (status.progress !== null && status.progress !== undefined) {

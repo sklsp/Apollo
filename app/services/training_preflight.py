@@ -129,7 +129,7 @@ def advise(
             severity="error",
         ))
         report.verdict = "unsupported"
-        report.summary = "No usable GPU detected — training is not practical on this machine."
+        report.summary = "No usable GPU detected: training is not practical on this machine."
         report.recommendations.append(
             "Install/enable GPU drivers, or run training on a different machine."
         )
@@ -157,7 +157,7 @@ def advise(
             report.checks.append(PreflightCheck(
                 name="VRAM",
                 passed=True,
-                detail=f"~{estimate // 1024} GB estimated vs {vram_total // 1024} GB available — tight",
+                detail=f"~{estimate // 1024} GB estimated vs {vram_total // 1024} GB available, tight",
                 severity="warning",
             ))
             report.verdict = "heavy"
@@ -191,7 +191,7 @@ def advise(
         report.checks.append(PreflightCheck(
             name="System RAM",
             passed=True,
-            detail=f"{ram // 1024} GB total — below the 16 GB comfort zone for SDXL",
+            detail=f"{ram // 1024} GB total, below the 16 GB comfort zone for SDXL",
             severity="warning",
         ))
         if report.verdict == "ok":
@@ -208,7 +208,7 @@ def advise(
             report.checks.append(PreflightCheck(
                 name="Disk space",
                 passed=False,
-                detail=f"{free_gb} GB free — checkpoints need 5-15 GB",
+                detail=f"{free_gb} GB free; checkpoints need 5-15 GB",
                 severity="error",
             ))
             report.verdict = "blocked"
@@ -260,7 +260,7 @@ def advise(
     elif report.verdict == "heavy":
         report.summary = "Training may be tight on resources but should fit."
     elif report.verdict == "risky":
-        report.summary = "High risk of out-of-memory — reduce load before starting."
+        report.summary = "High risk of out-of-memory: reduce load before starting."
     return report
 
 
