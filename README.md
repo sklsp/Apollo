@@ -474,7 +474,7 @@ Apollo/
 │   ├── smoke_preflight.py        # Live training-preflight demo
 │   └── smoke_rag_persistence.py  # Restart-survival verification for the index
 ├── workflows/                    # ComfyUI workflows + node-input mappings
-├── tests/                        # Test suite (253 tests) + legacy debug scripts
+├── tests/                        # Test suite (261 tests) + legacy debug scripts
 ├── data/                         # Documents, sessions, jobs, LoRA projects, generated images, rag index
 ├── images/                       # Feature demo GIFs (README showcase)
 ├── launcher.py                   # One-command startup (API + tunnel)
@@ -648,7 +648,7 @@ Local-first does not mean unguarded:
 - Documents, sessions, jobs, LoRA projects, workflows and generated images all persist on disk
 - Upload debug logs appear in the server console: `[UPLOAD] filename`, `extracted chars`, `rag chunks indexed`
 - Utility scripts: `python scripts/verify_system.py`, `python scripts/diagnostics_ollama.py`
-- Run the tests with `python -m pytest` (253 tests); stress tests: `pytest tests/test_stress.py -m slow`
+- Run the tests with `python -m pytest` (261 tests); stress tests: `pytest tests/test_stress.py -m slow`
 - Log prefixes: `[COMFYUI]`, `[COMFYUI JOB]`, `[LORA]`, `[LORA TRAINING]`, `[DATASET]`, `[RAG]`, `[RUN HISTORY]`
 - `tests/` also contains standalone diagnostic scripts (`test_endpoints.py`,
   `test_ollama_detailed.py`, …) that predate the suite. They print at import time
