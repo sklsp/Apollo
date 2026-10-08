@@ -44,7 +44,7 @@ Each module is independent: **chat and RAG keep working when ComfyUI, Ollama, or
 python launcher.py
 ```
 
-Open **http://localhost:8000**, or use the auto-generated Cloudflare tunnel URL for a public demo.
+Open **http://localhost:8000**, or use the auto-generated Cloudflare tunnel URL for a public demo. The launcher protects that public URL with an access token: it prints (and copies) a link ending in `?token=...`, and only people with that link get in.
 
 ---
 
@@ -219,7 +219,15 @@ python -m pip install -r requirements.txt
 python launcher.py
 ```
 
-Starts the API, waits for `/health`, launches a Cloudflare quick tunnel, copies the public URL to clipboard, and opens the dashboard.
+Starts the API, waits for `/health`, launches a Cloudflare quick tunnel, copies the public link to the clipboard, and opens the dashboard.
+
+Because the tunnel makes Apollo reachable from the internet, the launcher sets an access token (`APOLLO_ACCESS_TOKEN`, random unless you set your own):
+
+- **Browsers:** the printed link ends in `?token=...`. Opening it once sets an HttpOnly cookie and drops the token from the address bar.
+- **API clients:** send the `X-Apollo-Token` header.
+- **Open probes:** `/live` and `/health` stay open for health checks.
+
+Run uvicorn directly without the variable and Apollo stays open, as a local tool.
 
 **Local API only:**
 
@@ -262,6 +270,7 @@ python main.py --api
 | `DATA_DIR` | `./data` | Where `documents.json` / `sessions.json` persistence lives |
 | `MAX_IMAGE_UPLOAD_MB` | `25` | Per-image cap for dataset uploads |
 | `PORT` | `8000` | Server port (`launcher.py`) |
+| `APOLLO_ACCESS_TOKEN` | unset (the launcher generates one) | When set, every request except `/live` and `/health` needs this token |
 | `CLOUDFLARED_PATH` | auto-detect | Path to `cloudflared` executable |
 
 A `.env` file in the project root is loaded automatically (real environment

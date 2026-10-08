@@ -10,6 +10,7 @@ from __future__ import annotations
 import atexit
 import os
 import re
+import secrets
 import signal
 import subprocess
 import sys
@@ -106,19 +107,27 @@ def _on_tunnel_line(line: str) -> None:
     _announce_public_url(_public_url)
 
 
+def _with_token(base: str) -> str:
+    """The dashboard link that carries the access token (opening it once sets a cookie)."""
+    token = os.environ.get("APOLLO_ACCESS_TOKEN")
+    return f"{base}/?token={token}" if token else base
+
+
 def _announce_public_url(url: str) -> None:
     """Print, copy, and open the public dashboard URL."""
+    link = _with_token(url)
     print("\n" + "=" * 70)
     print("  APOLLO — LIVE")
     print("=" * 70)
-    print(f"\n  Local:   http://localhost:{PORT}")
-    print(f"  Public:  {url}")
-    print(f"  API:     {url}/chat")
+    print(f"\n  Local:   {_with_token(f'http://localhost:{PORT}')}")
+    print(f"  Public:  {link}")
+    print(f"  API:     {url}/chat  (send the X-Apollo-Token header)")
+    print("  Only people with this link can open Apollo; keep it private.")
     print()
 
     if pyperclip is not None:
         try:
-            pyperclip.copy(url)
+            pyperclip.copy(link)
             print("  Clipboard: public URL copied")
         except pyperclip.PyperclipException as exc:
             print(f"  Clipboard: could not copy ({exc})")
@@ -128,7 +137,7 @@ def _announce_public_url(url: str) -> None:
     print("\n  Opening dashboard in browser...")
     print("=" * 70 + "\n", flush=True)
 
-    webbrowser.open(url)
+    webbrowser.open(link)
     _url_announced.set()
 
 
@@ -386,6 +395,9 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
+    # The quick tunnel makes Apollo reachable from the internet, so the API gets an access token
+    # (keep your own by setting APOLLO_ACCESS_TOKEN). uvicorn inherits it from this environment.
+    os.environ.setdefault("APOLLO_ACCESS_TOKEN", secrets.token_urlsafe(24))
     uvicorn_proc = _start_uvicorn()
     startup = _wait_for_backend()
     if not startup.ok:
@@ -412,7 +424,7 @@ def main() -> int:
                 f"http://localhost:{PORT}\n",
                 flush=True,
             )
-            webbrowser.open(f"http://localhost:{PORT}")
+            webbrowser.open(_with_token(f"http://localhost:{PORT}"))
 
     threading.Thread(target=_local_fallback, daemon=True).start()
 
