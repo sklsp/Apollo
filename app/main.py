@@ -1,9 +1,12 @@
+import hmac
 import logging
+import os
 from pathlib import Path
+from urllib.parse import urlencode
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 
 from app.api.comfyui_routes import jobs_router
 from app.api.comfyui_routes import router as comfyui_router
@@ -38,6 +41,9 @@ def _iter_api_routes(routes):
             yield route
 
 
+ACCESS_COOKIE = "apollo_access"
+
+
 def create_app(service: object | None = None) -> FastAPI:
     """Create and configure the FastAPI application.
 
@@ -65,6 +71,33 @@ def create_app(service: object | None = None) -> FastAPI:
         allow_methods=["*"],  # Allow all HTTP methods
         allow_headers=["*"],  # Allow all headers
     )
+
+    # ============ ACCESS TOKEN (optional) ============
+    # launcher.py publishes Apollo through a public Cloudflare tunnel whose traffic reaches
+    # uvicorn from localhost, so "local" proves nothing. With APOLLO_ACCESS_TOKEN set, every
+    # request needs that token: the X-Apollo-Token header, or the cookie set by opening
+    # /?token=<token> once. Unset (a plain local run) leaves Apollo open, as before.
+    @app.middleware("http")
+    async def require_access_token(request: Request, call_next):
+        token = os.environ.get("APOLLO_ACCESS_TOKEN", "")
+        if not token or request.url.path in ("/live", "/health"):
+            return await call_next(request)
+        offered = request.query_params.get("token")
+        if offered is not None and hmac.compare_digest(offered.encode(), token.encode()):
+            rest = urlencode([(k, v) for k, v in request.query_params.multi_items() if k != "token"])
+            response = RedirectResponse(request.url.path + (f"?{rest}" if rest else ""), status_code=303)
+            https = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
+            response.set_cookie(ACCESS_COOKIE, token, max_age=30 * 24 * 3600, httponly=True,
+                                samesite="lax", secure=https)
+            return response
+        presented = request.headers.get("x-apollo-token") or request.cookies.get(ACCESS_COOKIE) or ""
+        if hmac.compare_digest(presented.encode(), token.encode()):
+            return await call_next(request)
+        return PlainTextResponse(
+            "Apollo is private. Open the link launcher.py printed (it ends in ?token=...), "
+            "or send the X-Apollo-Token header.",
+            status_code=401,
+        )
 
     # ============ INITIALIZE SERVICES ============
     app.state.llm_service = service or LLMService()
