@@ -447,7 +447,7 @@ def stop_training(
     project_id: str,
     service: LoRATrainingService = Depends(get_training_service),
 ) -> dict:
-    """Terminate this project's training process — and only that one."""
+    """Terminate this project's training process, and only that one."""
     try:
         stopped = service.stop_training(project_id)
     except (ServiceError, UnsafePathError) as exc:
@@ -504,7 +504,7 @@ def write_training_config(
     payload: TrainingConfigRequest,
     service: LoRATrainingService = Depends(get_training_service),
 ) -> dict:
-    """Generate training.yml without starting a run — lets the user preview it."""
+    """Generate training.yml without starting a run, so the user can preview it."""
     try:
         path = service.write_config(project_id, payload.model_dump(exclude_none=True))
     except (ServiceError, UnsafePathError) as exc:

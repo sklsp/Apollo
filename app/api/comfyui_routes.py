@@ -102,7 +102,7 @@ def get_workflow(
     workflow_id: str,
     service: ComfyUIService = Depends(get_comfyui_service),
 ) -> dict:
-    """Full graph plus mapping — used by the workflow input mapper UI."""
+    """Full graph plus mapping, used by the workflow input mapper UI."""
     try:
         graph, mapping = service.load_workflow(workflow_id)
     except (ServiceError, UnsafePathError) as exc:

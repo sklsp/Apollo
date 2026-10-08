@@ -454,17 +454,17 @@ class LoRATrainingService:
             tiers: dict[str, Any] = {
                 "vram_mb": None,
                 "tier": "unknown",
-                "note": "No GPU detected — showing conservative defaults.",
+                "note": "No GPU detected: showing conservative defaults.",
             }
         elif vram <= 8 * 1024:
             tiers = {"vram_mb": vram, "tier": "small",
-                     "note": f"{vram // 1024} GB GPU — conservative settings."}
+                     "note": f"{vram // 1024} GB GPU: conservative settings."}
         elif vram <= 16 * 1024:
             tiers = {"vram_mb": vram, "tier": "medium",
-                     "note": f"{vram // 1024} GB GPU — balanced settings."}
+                     "note": f"{vram // 1024} GB GPU: balanced settings."}
         else:
             tiers = {"vram_mb": vram, "tier": "large",
-                     "note": f"{vram // 1024} GB GPU — quality settings available."}
+                     "note": f"{vram // 1024} GB GPU: quality settings available."}
 
         variants: dict[str, dict[str, Any]] = {}
         for preset_id, preset in TRAINING_PRESETS.items():
