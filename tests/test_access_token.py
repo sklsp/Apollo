@@ -75,3 +75,12 @@ def test_launcher_links_carry_the_token(monkeypatch):
     assert launcher._with_token("https://x.trycloudflare.com") == f"https://x.trycloudflare.com/?token={TOKEN}"
     monkeypatch.delenv("APOLLO_ACCESS_TOKEN")
     assert launcher._with_token("http://localhost:8000") == "http://localhost:8000"
+
+
+def test_other_sites_cannot_read_responses_with_the_cookie(make_client, monkeypatch):
+    """With CORS credentials on, Starlette echoed any Origin that sent a cookie."""
+    monkeypatch.setenv("APOLLO_ACCESS_TOKEN", TOKEN)
+    with make_client() as client:
+        response = client.get("/prompts", headers={"Origin": "https://evil.example", "Cookie": f"apollo_access={TOKEN}"})
+        assert response.headers.get("access-control-allow-origin") != "https://evil.example"
+        assert response.headers.get("access-control-allow-credentials") is None

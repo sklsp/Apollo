@@ -63,11 +63,13 @@ def create_app(service: object | None = None) -> FastAPI:
     )
 
     # ============ CORS MIDDLEWARE ============
-    # Allow frontend to call backend from same origin and across network
+    # Any origin may call the API, but never with credentials: the access cookie must not
+    # ride along on another site's request (with credentials on, Starlette echoes any
+    # origin that sends a cookie). The dashboard itself is same-origin and needs no CORS.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Allow all origins (safe for local network)
-        allow_credentials=True,
+        allow_origins=["*"],
+        allow_credentials=False,
         allow_methods=["*"],  # Allow all HTTP methods
         allow_headers=["*"],  # Allow all headers
     )
