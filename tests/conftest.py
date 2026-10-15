@@ -26,6 +26,81 @@ collect_ignore = [
 ]
 
 
+def _install_shared_embedding_model() -> None:
+    """Make repeated sentence-transformers loads share one model instance.
+
+    ``EmbeddingClient`` falls back to ``SentenceTransformer("all-MiniLM-L6-v2")``
+    once per instance (app/services/rag/embeddings.py), and sentence-transformers
+    6.x keeps no class-level cache, so every RAGService construction re-reads the
+    model from disk (~3-6 s each; ~14 s cold including the torch import). The
+    tests never assert on vector values or on how often a model is loaded — only
+    that an embedding backend exists and works — so sharing one real instance
+    preserves behaviour while removing the suite's dominant cost. Ollama itself
+    stays genuinely unreachable: every client still attempts (and fails) its HTTP
+    probe before falling back.
+    """
+    try:
+        import sentence_transformers as st
+    except ImportError:  # pragma: no cover - ST is required for the fallback path
+        return
+
+    cls = st.SentenceTransformer
+    if getattr(cls, "_apollo_shared_model", False):
+        return
+
+    original_init = cls.__init__
+    shared: dict[str, object] = {}
+
+    def cached_init(self, model_name_or_path=None, *args, **kwargs) -> None:
+        key = (
+            model_name_or_path
+            if isinstance(model_name_or_path, str) and not args and not kwargs
+            else None
+        )
+        if key is not None and key in shared:
+            self.__dict__.update(shared[key].__dict__)
+            return
+        original_init(self, model_name_or_path, *args, **kwargs)
+        if key is not None:
+            shared[key] = self
+
+    cls._apollo_shared_model = True  # type: ignore[attr-defined]
+    cls.__init__ = cached_init  # type: ignore[method-assign]
+
+
+_install_shared_embedding_model()
+
+
+@pytest.fixture(autouse=True)
+def fast_external_timeouts():
+    """Fail fast against the absent Ollama/ComfyUI during tests.
+
+    On this machine a connect to a closed localhost port is refused only after
+    ~2-4 s (delayed RST), so every real-client probe in the suite pays that delay
+    on top of its work. The tests assert on outcomes — unreachable services
+    surface as errors, 503s or fallbacks — not on how long an attempt took, and
+    none of them read these settings directly (the one test that needs specific
+    values sets them itself via ``set_setting``). Originals are restored after
+    each test.
+    """
+    from app.core import config
+
+    overrides = {
+        "request_timeout": 0.2,
+        "vision_timeout": 0.2,
+        "comfyui_timeout": 0.2,
+        "comfyui_generation_timeout": 0.5,
+        "comfyui_poll_interval": 0.05,
+    }
+    originals = {name: getattr(config.settings, name) for name in overrides}
+
+    for name, value in overrides.items():
+        object.__setattr__(config.settings, name, value)
+    yield
+    for name, value in originals.items():
+        object.__setattr__(config.settings, name, value)
+
+
 @pytest.fixture
 def tmp_settings(tmp_path):
     """Point every writable storage root at a temp dir for the duration of a test.
