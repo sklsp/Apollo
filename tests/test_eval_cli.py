@@ -98,6 +98,36 @@ class TestRun:
         assert code == 1
         assert not out.exists()
 
+    def test_hybrid_mode_requires_service_flag(self, _fake_client, tmp_path):
+        out = tmp_path / "hybrid.json"
+
+        code = run(["--hybrid-mode", "vector", "--out", str(out)], client=_fake_client)
+
+        assert code == 1
+        assert not out.exists()
+
+    def test_hybrid_mode_recorded_in_report(self, _fake_client, tmp_path):
+        out = tmp_path / "hybrid.json"
+
+        code = run(
+            ["--top-k", "2", "--out", str(out), "--service", "--hybrid-mode", "keyword"],
+            client=_fake_client,
+        )
+
+        assert code == 0
+        report = json.loads(out.read_text(encoding="utf-8"))
+        assert report["config"]["mode"] == "service"
+        assert report["config"]["retrieval_mode"] == "keyword"
+
+    def test_service_mode_records_default_retrieval_mode(self, _fake_client, tmp_path):
+        out = tmp_path / "default-mode.json"
+
+        code = run(["--top-k", "2", "--out", str(out), "--service"], client=_fake_client)
+
+        assert code == 0
+        report = json.loads(out.read_text(encoding="utf-8"))
+        assert report["config"]["retrieval_mode"] == settings.rag_hybrid
+
 
     def test_fallback_backend_records_actual_model(self, tmp_path):
         """When Ollama is down and sentence-transformers serves the vectors, the

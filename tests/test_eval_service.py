@@ -94,6 +94,50 @@ class TestRunRetrievalOnService:
             run_retrieval_on_service(EvalDataset(docs=[], questions=[]), service)
 
 
+class TestRunRetrievalOnServiceModes:
+    """Item 35: explicit retrieval modes for side-by-side comparison."""
+
+    def test_mode_defaults_to_production_setting(self, service, synthetic_dataset):
+        index_dataset(service, synthetic_dataset)
+
+        default = run_retrieval_on_service(synthetic_dataset, service, top_k=3)
+        explicit = run_retrieval_on_service(
+            synthetic_dataset, service, top_k=3, mode="auto"
+        )
+
+        assert [r.retrieved_doc_ids for r in default] == [r.retrieved_doc_ids for r in explicit]
+
+    def test_keyword_mode_returns_only_keyword_matches(self, service, synthetic_dataset):
+        # The question's tokens appear only in the alpha document.
+        index_dataset(service, synthetic_dataset)
+
+        results = run_retrieval_on_service(
+            synthetic_dataset, service, top_k=3, mode="keyword"
+        )
+
+        assert all(doc_id == "alpha" for r in results for doc_id in r.retrieved_doc_ids)
+        assert any(r.retrieved_doc_ids for r in results)
+
+    def test_vector_mode_matches_query_vector(self, service, synthetic_dataset):
+        index_dataset(service, synthetic_dataset)
+
+        results = run_retrieval_on_service(
+            synthetic_dataset, service, top_k=3, mode="vector"
+        )
+
+        for question, result in zip(synthetic_dataset.questions, results, strict=True):
+            expected = tuple(
+                hit.doc_id for hit in service.query_vector(question.question, top_k=3)
+            )
+            assert result.retrieved_doc_ids == expected
+
+    def test_invalid_mode_raises(self, service, synthetic_dataset):
+        index_dataset(service, synthetic_dataset)
+
+        with pytest.raises(ValueError, match="unknown retrieval mode"):
+            run_retrieval_on_service(synthetic_dataset, service, top_k=3, mode="bm25")
+
+
 class TestCommittedCorpus:
     def test_runs_every_committed_question_through_the_service(self, tmp_path):
         dataset = load_dataset()

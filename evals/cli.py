@@ -13,7 +13,7 @@ report (item 23). Three modes:
 
 Usage:
     python -m evals.cli [--top-k N] [--chunk-size N] [--overlap N]
-                        [--out PATH] [--service | --grid]
+                        [--out PATH] [--service | --grid] [--hybrid-mode M]
 """
 
 from __future__ import annotations
@@ -55,6 +55,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--grid", action="store_true",
                         help=f"run every cell of the chunking grid "
                              f"(default: {DEFAULT_CHUNKING_GRID}) and write one row per cell")
+    parser.add_argument("--hybrid-mode", choices=("auto", "vector", "keyword"), default=None,
+                        help="service mode only; retrieval path to measure "
+                             "(default: RAG_HYBRID setting)")
     return parser
 
 
@@ -67,6 +70,9 @@ def run(argv: list[str] | None = None, *, client: EmbeddingClient | None = None)
     if args.grid and (args.service or args.chunk_size is not None or args.overlap is not None):
         print("error: --grid cannot be combined with --service, --chunk-size or --overlap",
               file=sys.stderr)
+        return 1
+    if args.hybrid_mode is not None and not args.service:
+        print("error: --hybrid-mode requires --service", file=sys.stderr)
         return 1
 
     client = client or EmbeddingClient()
@@ -88,7 +94,12 @@ def run(argv: list[str] | None = None, *, client: EmbeddingClient | None = None)
             try:
                 service = RAGService(embedding_client=client, persist_dir=str(persist_dir))
                 config["num_chunks"] = index_dataset(service, dataset)
-                results = run_retrieval_on_service(dataset, service, top_k=top_k)
+                results = run_retrieval_on_service(
+                    dataset, service, top_k=top_k, mode=args.hybrid_mode
+                )
+                config["retrieval_mode"] = (
+                    args.hybrid_mode if args.hybrid_mode is not None else service.hybrid_mode
+                )
             finally:
                 shutil.rmtree(persist_dir, ignore_errors=True)
         else:
