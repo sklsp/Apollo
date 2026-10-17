@@ -106,7 +106,9 @@ class VectorStore:
         self.persist_dir = Path(persist_dir) if persist_dir else None
         self._chunks: list[StoredChunk] = []
         self._embeddings: list[np.ndarray] = []
-        self._index = faiss.IndexFlatIP(dimension)
+        # Declared as the base Index type: faiss.read_index() may return any
+        # index class, and only add/search/ntotal are ever used on it.
+        self._index: faiss.Index = faiss.IndexFlatIP(dimension)
         self._dirty = False
 
         if self.persist_dir is not None:

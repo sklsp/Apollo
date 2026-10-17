@@ -5,7 +5,7 @@ from typing import Any
 try:
     import requests
 except ImportError:  # pragma: no cover - exercised in minimal environments
-    requests = None
+    requests = None  # type: ignore[assignment]
 
 from .config import OLLAMA_BASE_URL
 

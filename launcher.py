@@ -166,7 +166,8 @@ def _http_probe(url: str, timeout: float = 3.0) -> tuple[int | None, str | None,
             body = None
         return exc.code, body, None
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        return None, None, str(exc.reason or exc)
+        # Only URLError carries .reason; plain OSError/TimeoutError do not.
+        return None, None, str(getattr(exc, "reason", None) or exc)
 
 
 def _wait_for_backend(timeout: float = 45.0) -> StartupResult:

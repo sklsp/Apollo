@@ -1,7 +1,7 @@
 """Memory service for managing chat history per session."""
 
 from datetime import UTC, datetime
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from app.core.persistence import JsonPersist
 
@@ -44,7 +44,7 @@ class MemoryService:
             for session_id, messages in sessions.items():
                 if isinstance(messages, list):
                     self._storage[str(session_id)] = [
-                        message for message in messages
+                        cast(Message, message) for message in messages
                         if isinstance(message, dict) and "role" in message
                     ]
         settings_map = stored.get("settings")
