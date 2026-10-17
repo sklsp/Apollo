@@ -8,6 +8,8 @@ fused queries and keeping the index in sync with indexing operations.
 
 from __future__ import annotations
 
+import logging
+
 import pytest
 
 from app.services.rag.service import RAGService
@@ -48,3 +50,30 @@ class TestKeywordIndexStartup:
         service = RAGService(embedding_client=FakeServiceEmbedder(), persist_dir="")
 
         assert service.keyword_index is None
+
+
+class TestHybridModeSetting:
+    def test_defaults_to_auto(self):
+        # Config default; assumes RAG_HYBRID is not exported in the test env.
+        service = RAGService(embedding_client=FakeServiceEmbedder(), persist_dir="")
+
+        assert service.hybrid_mode == "auto"
+
+    def test_normalizes_case_and_whitespace(self, set_setting):
+        set_setting("rag_hybrid", "  VECTOR ")
+        service = RAGService(embedding_client=FakeServiceEmbedder(), persist_dir="")
+
+        assert service.hybrid_mode == "vector"
+
+    def test_unknown_value_falls_back_to_auto_with_warning(
+        self, set_setting, caplog
+    ):
+        set_setting("rag_hybrid", "banana")
+        service = RAGService(embedding_client=FakeServiceEmbedder(), persist_dir="")
+
+        with caplog.at_level(logging.WARNING):
+            assert service.hybrid_mode == "auto"
+        assert any(
+            "RAG_HYBRID" in record.getMessage() for record in caplog.records
+        )
+

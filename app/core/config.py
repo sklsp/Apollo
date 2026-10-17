@@ -36,6 +36,8 @@ class Settings:
     rag_chunk_size: int = int(os.getenv("RAG_CHUNK_SIZE", "800"))
     rag_chunk_overlap: int = int(os.getenv("RAG_CHUNK_OVERLAP", "150"))
     rag_top_k: int = int(os.getenv("RAG_TOP_K", "4"))
+    # Hybrid retrieval mode: "auto" (fuses vector + BM25 keyword), "vector", or "keyword".
+    rag_hybrid: str = os.getenv("RAG_HYBRID", "auto")
 
     # ---- Ollama vision (LoRA caption generation) ----
     vision_model: str = os.getenv("OLLAMA_VISION_MODEL", "llava")

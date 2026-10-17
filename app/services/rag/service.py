@@ -66,6 +66,22 @@ class RAGService:
         """BM25 index over stored chunks; ``None`` until a vector store exists."""
         return self._keyword_index
 
+    @property
+    def hybrid_mode(self) -> str:
+        """Retrieval mode from ``RAG_HYBRID``: auto, vector, or keyword.
+
+        Unknown values fall back to ``auto`` with a warning rather than
+        failing retrieval.
+        """
+        mode = settings.rag_hybrid.strip().lower()
+        if mode not in ("auto", "vector", "keyword"):
+            logger.warning(
+                "[RAG] Unknown RAG_HYBRID value %r; falling back to auto",
+                settings.rag_hybrid,
+            )
+            return "auto"
+        return mode
+
     def document_versions(self) -> dict[str, dict[str, Any]]:
         """Which version of each document is currently indexed."""
         return {doc_id: dict(info) for doc_id, info in self._doc_versions.items()}
