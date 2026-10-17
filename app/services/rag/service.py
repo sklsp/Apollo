@@ -20,6 +20,7 @@ from app.core.config import settings
 from app.services.rag.bm25 import KeywordIndex, build_keyword_index
 from app.services.rag.chunking import chunk_text
 from app.services.rag.embeddings import EmbeddingClient
+from app.services.rag.fusion import reciprocal_rank_fuse
 from app.services.rag.vector_store import (
     IndexIncompatibleError,
     RetrievedChunk,
@@ -154,6 +155,9 @@ class RAGService:
             removed = self._store.remove_by_doc_id(doc_id)
             if removed:
                 logger.info("[RAG] %s changed; dropped %d stale chunks", doc_id, removed)
+        # Keep the keyword index in sync with whatever was just dropped.
+        if self._keyword_index is not None and self._store is not None:
+            self._keyword_index.remove_by_doc_id(doc_id)
 
         chunks = chunk_text(
             text,
@@ -180,6 +184,9 @@ class RAGService:
         ]
         assert self._store is not None
         self._store.add(embeddings, stored_chunks)
+        # Keep the keyword index in sync with the freshly indexed chunks.
+        if self._keyword_index is not None:
+            self._keyword_index.add_chunks(stored_chunks)
         self._record_version(doc_id, text, len(chunks))
         self._save()
         return len(chunks)
@@ -198,6 +205,7 @@ class RAGService:
             "index_chunks": self.chunk_count,
             "embedding_model": self.embedding_client.model,
             "backend": self.embedding_client.backend,
+            "retrieval_mode": self.hybrid_mode,
             "retrieved": [
                 {
                     "doc_id": chunk.doc_id,
@@ -212,13 +220,66 @@ class RAGService:
         }
 
     def query(self, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
-        """Retrieve the most relevant chunks for a question."""
+        """Retrieve the most relevant chunks for a question.
+
+        The retrieval mode follows ``RAG_HYBRID`` (see :attr:`hybrid_mode`):
+        ``auto`` fuses vector similarity with BM25 keyword ranking, while
+        ``vector`` and ``keyword`` use only that single signal.
+        """
+        k = top_k or settings.rag_top_k
+        mode = self.hybrid_mode
+        if mode == "vector":
+            return self.query_vector(question, k)
+        if mode == "keyword":
+            if self._keyword_index is None:
+                return []
+            return self._keyword_index.search(question, top_k=k)
+        return self.query_hybrid(question, top_k=k)
+
+    def query_vector(self, question: str, top_k: int) -> list[RetrievedChunk]:
+        """Pure vector leg of retrieval (no keyword fusion)."""
+        if not self._store or self._store.size == 0:
+            return []
+        query_embedding = self.embedding_client.embed(question)
+        return self._store.search(query_embedding, top_k=top_k)
+
+    def query_hybrid(self, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
+        """Retrieve chunks by fusing vector similarity with BM25 keyword ranking.
+
+        Both rankings are combined with reciprocal rank fusion (k=60), so a
+        chunk that ranks well in either signal surfaces even when the other
+        misses it entirely. Each returned chunk carries its fused RRF score
+        rather than a raw cosine or BM25 value, and results are sorted by that
+        score descending. Degrades to plain vector search when no keyword
+        index is available.
+        """
+        k = top_k or settings.rag_top_k
         if not self._store or self._store.size == 0:
             return []
 
-        k = top_k or settings.rag_top_k
-        query_embedding = self.embedding_client.embed(question)
-        return self._store.search(query_embedding, top_k=k)
+        vector_hits = self.query_vector(question, k)
+        keyword_hits = (
+            self._keyword_index.search(question, top_k=k)
+            if self._keyword_index is not None
+            else []
+        )
+        fused = reciprocal_rank_fuse(
+            [
+                [f"{chunk.doc_id}:{chunk.chunk_index}" for chunk in vector_hits],
+                [f"{chunk.doc_id}:{chunk.chunk_index}" for chunk in keyword_hits],
+            ],
+            top_k=k,
+        )
+        by_id = {
+            f"{chunk.doc_id}:{chunk.chunk_index}": chunk
+            for chunk in [*vector_hits, *keyword_hits]
+        }
+        results: list[RetrievedChunk] = []
+        for chunk_id, rrf_score in fused:
+            chunk = by_id[chunk_id]
+            chunk.score = rrf_score
+            results.append(chunk)
+        return results
 
     def format_context(self, chunks: list[RetrievedChunk]) -> str:
         """Format retrieved chunks for LLM prompt injection."""
@@ -239,6 +300,8 @@ class RAGService:
             return 0
         removed = self._store.remove_by_doc_id(doc_id)
         if removed:
+            if self._keyword_index is not None:
+                self._keyword_index.remove_by_doc_id(doc_id)
             self._doc_versions.pop(doc_id, None)
             self._save()
         return removed
@@ -247,6 +310,8 @@ class RAGService:
         """Clear the entire vector index."""
         if self._store:
             self._store.clear()
+        if self._keyword_index is not None:
+            self._keyword_index.clear()
         self._doc_versions.clear()
         self._save()
 
