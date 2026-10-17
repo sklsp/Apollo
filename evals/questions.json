@@ -1,0 +1,409 @@
+[
+  {
+    "id": "q01",
+    "question": "What does a diffusion model learn to do in order to generate an image?",
+    "source_docs": ["diffusion-basics"],
+    "key_facts": [
+      "reversing a gradual noising process",
+      "remove a little noise at a time"
+    ]
+  },
+  {
+    "id": "q02",
+    "question": "What network architecture is typically used for the denoiser, and what does it take as input?",
+    "source_docs": ["diffusion-basics"],
+    "key_facts": [
+      "U-Net that takes a noisy image and a step counter as input"
+    ]
+  },
+  {
+    "id": "q03",
+    "question": "How many sampling steps does a typical generation use?",
+    "source_docs": ["diffusion-basics"],
+    "key_facts": [
+      "between 20 and 50 steps"
+    ]
+  },
+  {
+    "id": "q04",
+    "question": "Why do modern systems such as Stable Diffusion operate in latent space instead of raw pixels?",
+    "source_docs": ["diffusion-basics"],
+    "key_facts": [
+      "Running the full noising process on raw pixels is expensive",
+      "compressed latent space"
+    ]
+  },
+  {
+    "id": "q05",
+    "question": "How does text conditioning steer image generation in a diffusion model?",
+    "source_docs": ["diffusion-basics"],
+    "key_facts": [
+      "cross-attention layers let every part of the image attend to those tokens"
+    ]
+  },
+  {
+    "id": "q06",
+    "question": "When was SDXL released and by whom?",
+    "source_docs": ["sdxl"],
+    "key_facts": [
+      "released by Stability AI in 2023"
+    ]
+  },
+  {
+    "id": "q07",
+    "question": "How does the size of SDXL's UNet compare to SD 1.5's?",
+    "source_docs": ["sdxl"],
+    "key_facts": [
+      "roughly three times larger than in SD 1.5"
+    ]
+  },
+  {
+    "id": "q08",
+    "question": "How does the VAE latent representation differ between SDXL and SD 1.5?",
+    "source_docs": ["sdxl"],
+    "key_facts": [
+      "sixteen channels, compared to four channels in SD 1.5"
+    ]
+  },
+  {
+    "id": "q09",
+    "question": "How does SDXL condition on text prompts differently from earlier models?",
+    "source_docs": ["sdxl"],
+    "key_facts": [
+      "two CLIP encoders at once",
+      "open_clip ViT-bigG"
+    ]
+  },
+  {
+    "id": "q10",
+    "question": "At what resolution was SDXL primarily trained?",
+    "source_docs": ["sdxl"],
+    "key_facts": [
+      "trained primarily at 1024 by 1024 pixels"
+    ]
+  },
+  {
+    "id": "q11",
+    "question": "How much VRAM is needed for comfortable interactive SDXL generation?",
+    "source_docs": ["sdxl"],
+    "key_facts": [
+      "around eight gigabytes with optimizations such as attention slicing enabled"
+    ]
+  },
+  {
+    "id": "q12",
+    "question": "Are LoRAs trained on SDXL compatible with SD 1.5 checkpoints?",
+    "source_docs": ["sdxl"],
+    "key_facts": [
+      "not compatible with SD 1.5 checkpoints"
+    ]
+  },
+  {
+    "id": "q13",
+    "question": "Where in a prompt should the main subject be placed, and why?",
+    "source_docs": ["prompt-engineering"],
+    "key_facts": [
+      "Models attend most strongly to the beginning of the prompt",
+      "Put the main subject in the first few words"
+    ]
+  },
+  {
+    "id": "q14",
+    "question": "What is a safe range for emphasis weights using parentheses?",
+    "source_docs": ["prompt-engineering"],
+    "key_facts": [
+      "Weights between 1.1 and 1.5 are a safe range"
+    ]
+  },
+  {
+    "id": "q15",
+    "question": "What happens if you push emphasis weights above about 2?",
+    "source_docs": ["prompt-engineering"],
+    "key_facts": [
+      "distorts anatomy or saturates colors",
+      "over-commits to that concept at every denoising step"
+    ]
+  },
+  {
+    "id": "q16",
+    "question": "How do negative prompts work?",
+    "source_docs": ["prompt-engineering"],
+    "key_facts": [
+      "conditioning the model to move away from those concepts during sampling"
+    ]
+  },
+  {
+    "id": "q17",
+    "question": "Which negative terms are most effective for anatomy problems?",
+    "source_docs": ["prompt-engineering"],
+    "key_facts": [
+      "extra fingers",
+      "deformed hands",
+      "bad anatomy"
+    ]
+  },
+  {
+    "id": "q18",
+    "question": "What happens to prompt text beyond roughly seventy-five tokens?",
+    "source_docs": ["prompt-engineering"],
+    "key_facts": [
+      "beyond roughly seventy-five tokens are truncated by the CLIP encoder"
+    ]
+  },
+  {
+    "id": "q19",
+    "question": "What does the CFG scale control?",
+    "source_docs": ["sampling-and-cfg"],
+    "key_facts": [
+      "interpolates between \"what the model thinks is likely\" and \"what matches the prompt\""
+    ]
+  },
+  {
+    "id": "q20",
+    "question": "What CFG value means pure model output with no extra steering?",
+    "source_docs": ["sampling-and-cfg"],
+    "key_facts": [
+      "A CFG of 1 means pure model output with no extra steering"
+    ]
+  },
+  {
+    "id": "q21",
+    "question": "What is a sensible starting CFG range for SDXL work?",
+    "source_docs": ["sampling-and-cfg"],
+    "key_facts": [
+      "a CFG between 5 and 7 is a sensible starting point"
+    ]
+  },
+  {
+    "id": "q22",
+    "question": "Which sampler pairs a second-order prediction with a Karras noise schedule?",
+    "source_docs": ["sampling-and-cfg"],
+    "key_facts": [
+      "DPM++ 2M Karras",
+      "pairs a second-order prediction with a Karras noise schedule"
+    ]
+  },
+  {
+    "id": "q23",
+    "question": "Which sampler is deterministic for a given seed?",
+    "source_docs": ["sampling-and-cfg"],
+    "key_facts": [
+      "deterministic for a given seed"
+    ]
+  },
+  {
+    "id": "q24",
+    "question": "What practical default combination of sampler, steps, and CFG is recommended?",
+    "source_docs": ["sampling-and-cfg"],
+    "key_facts": [
+      "DPM++ 2M Karras, 25 steps, CFG 6"
+    ]
+  },
+  {
+    "id": "q25",
+    "question": "How does LoRA avoid updating all the weights of a large model?",
+    "source_docs": ["lora-concepts"],
+    "key_facts": [
+      "freezes W and learns two smaller matrices A and B"
+    ]
+  },
+  {
+    "id": "q26",
+    "question": "What does rank control in a LoRA, and which range captures a single strong concept?",
+    "source_docs": ["lora-concepts"],
+    "key_facts": [
+      "Low ranks (4 to 8) capture a single strong concept"
+    ]
+  },
+  {
+    "id": "q27",
+    "question": "How is the effective strength of a LoRA adapter at inference time determined?",
+    "source_docs": ["lora-concepts"],
+    "key_facts": [
+      "alpha divided by rank"
+    ]
+  },
+  {
+    "id": "q28",
+    "question": "How large is a typical SDXL LoRA file compared to a full checkpoint?",
+    "source_docs": ["lora-concepts"],
+    "key_facts": [
+      "10 to 200 megabytes on disk versus several gigabytes for a full checkpoint"
+    ]
+  },
+  {
+    "id": "q29",
+    "question": "How many training images is the usual working range for a single-subject LoRA?",
+    "source_docs": ["lora-dataset-curation"],
+    "key_facts": [
+      "twenty to fifty images is the usual working range"
+    ]
+  },
+  {
+    "id": "q30",
+    "question": "What should vary and what must stay consistent in a LoRA dataset?",
+    "source_docs": ["lora-dataset-curation"],
+    "key_facts": [
+      "different angles (front, three-quarter, profile), lighting conditions, backgrounds, and distances",
+      "What must stay consistent is the identity itself"
+    ]
+  },
+  {
+    "id": "q31",
+    "question": "How should captions for LoRA training describe each image?",
+    "source_docs": ["lora-dataset-curation"],
+    "key_facts": [
+      "describes everything except the trigger word reserved for the subject"
+    ]
+  },
+  {
+    "id": "q32",
+    "question": "What cleaning steps should be applied before LoRA training?",
+    "source_docs": ["lora-dataset-curation"],
+    "key_facts": [
+      "remove duplicates and near-duplicates",
+      "reject blurry or watermarked shots",
+      "normalize resolution"
+    ]
+  },
+  {
+    "id": "q33",
+    "question": "What core nodes does every ComfyUI workflow contain?",
+    "source_docs": ["comfyui-workflows"],
+    "key_facts": [
+      "CheckpointLoader that loads the base model",
+      "KSampler that runs the denoising loop"
+    ]
+  },
+  {
+    "id": "q34",
+    "question": "What does a KSampler denoise strength of 1.0 mean?",
+    "source_docs": ["comfyui-workflows"],
+    "key_facts": [
+      "1.0 ignores it entirely (pure generation)"
+    ]
+  },
+  {
+    "id": "q35",
+    "question": "How are ComfyUI workflows stored?",
+    "source_docs": ["comfyui-workflows"],
+    "key_facts": [
+      "saved as JSON files describing nodes and their connections"
+    ]
+  },
+  {
+    "id": "q36",
+    "question": "Where does Apollo store its built-in workflow templates?",
+    "source_docs": ["comfyui-workflows"],
+    "key_facts": [
+      "stores its built-in workflow templates in a `workflows` directory"
+    ]
+  },
+  {
+    "id": "q37",
+    "question": "What are the default chunking parameters for Apollo's knowledge base?",
+    "source_docs": ["apollo-rag-knowledge-base"],
+    "key_facts": [
+      "overlapping chunks of 800 characters with 150 characters of overlap"
+    ]
+  },
+  {
+    "id": "q38",
+    "question": "How does Apollo avoid re-embedding unchanged documents?",
+    "source_docs": ["apollo-rag-knowledge-base"],
+    "key_facts": [
+      "tracked by content hash",
+      "re-uploading an unchanged file skips re-embedding entirely"
+    ]
+  },
+  {
+    "id": "q39",
+    "question": "What kind of index does Apollo use for its knowledge base, and how is similarity computed?",
+    "source_docs": ["apollo-rag-knowledge-base"],
+    "key_facts": [
+      "FAISS flat inner-product index on disk",
+      "L2-normalized before storage, which makes the inner product equivalent to cosine similarity"
+    ]
+  },
+  {
+    "id": "q40",
+    "question": "How many chunks does Apollo retrieve by default when answering a chat question?",
+    "source_docs": ["apollo-rag-knowledge-base"],
+    "key_facts": [
+      "top four most similar chunks are retrieved by default (configurable via `RAG_TOP_K`)"
+    ]
+  },
+  {
+    "id": "q41",
+    "question": "What quality checks does Apollo run on LoRA dataset images before training?",
+    "source_docs": ["apollo-lora-pipeline"],
+    "key_facts": [
+      "Images are decoded to verify they are not corrupt",
+      "near-duplicates are detected by perceptual hash",
+      "resolution is checked against a minimum threshold"
+    ]
+  },
+  {
+    "id": "q42",
+    "question": "How does Apollo generate captions for training images?",
+    "source_docs": ["apollo-lora-pipeline"],
+    "key_facts": [
+      "If Ollama with a vision model is available locally, Apollo uses it to generate descriptive captions automatically"
+    ]
+  },
+  {
+    "id": "q43",
+    "question": "Why shouldn't you generate directly at 4K, and what is the two-stage refinement recipe?",
+    "source_docs": ["upscaling-and-resolution"],
+    "key_facts": [
+      "far outside the model's training distribution: subjects duplicate, anatomy breaks down",
+      "upscale 2x with a strong upscaler",
+      "low denoise strength around 0.3 to 0.4"
+    ]
+  },
+  {
+    "id": "q44",
+    "question": "Why must embeddings come from a single model, and how does Apollo enforce this?",
+    "source_docs": ["vector-search-basics", "apollo-rag-knowledge-base"],
+    "key_facts": [
+      "each model defines its own coordinate system",
+      "loading an index built with a different model is refused"
+    ]
+  },
+  {
+    "id": "q45",
+    "question": "What are the symptoms of an overfit LoRA?",
+    "source_docs": ["training-failure-modes"],
+    "key_facts": [
+      "the subject appearing with the exact same background, pose, or clothing from the dataset",
+      "plastic-looking skin and smeared textures"
+    ]
+  },
+  {
+    "id": "q46",
+    "question": "What usually causes identity drift in LoRA training?",
+    "source_docs": ["training-failure-modes", "lora-dataset-curation"],
+    "key_facts": [
+      "identity drift is usually a data problem, not a hyperparameter problem",
+      "Including images where the subject looks like someone else actively teaches the model the wrong thing"
+    ]
+  },
+  {
+    "id": "q47",
+    "question": "How do LoRA rank and alpha settings flow into Apollo's generated training configuration?",
+    "source_docs": ["lora-concepts", "apollo-lora-pipeline"],
+    "key_facts": [
+      "alpha divided by rank",
+      "rank and alpha, learning rate, epochs, and batch size"
+    ]
+  },
+  {
+    "id": "q48",
+    "question": "At what resolution should SDXL generate before upscaling, and why not directly larger?",
+    "source_docs": ["sdxl", "upscaling-and-resolution"],
+    "key_facts": [
+      "trained primarily at 1024 by 1024 pixels",
+      "far outside the model's training distribution"
+    ]
+  }
+]
