@@ -1,12 +1,11 @@
 import os
 from pathlib import Path
-from typing import Dict
 
 DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434"
 
 
-def _load_dotenv(path: Path) -> Dict[str, str]:
-    values: Dict[str, str] = {}
+def _load_dotenv(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
 
     try:
         with path.open("r", encoding="utf-8") as handle:

@@ -1,6 +1,7 @@
+import os
+
 from .core import run_agent
 from .io import import_document, list_supported_files
-import os
 
 
 def main():

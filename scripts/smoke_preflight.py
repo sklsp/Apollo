@@ -1,7 +1,6 @@
 """Live preflight smoke test against a running server (temp project)."""
 import io
 import json
-import sys
 import urllib.request
 
 from PIL import Image

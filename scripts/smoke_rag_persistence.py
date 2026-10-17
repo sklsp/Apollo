@@ -6,7 +6,6 @@ Run twice:
 """
 import json
 import sys
-import time
 import urllib.request
 
 BASE = "http://127.0.0.1:8765"
