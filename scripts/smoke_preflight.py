@@ -4,9 +4,9 @@ import json
 import sys
 import urllib.request
 
-BASE = "http://127.0.0.1:8765"
-
 from PIL import Image
+
+BASE = "http://127.0.0.1:8765"
 
 
 def main() -> None:

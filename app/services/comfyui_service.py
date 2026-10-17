@@ -406,7 +406,7 @@ class ComfyUIService:
         """
         saved: list[str] = []
         for node_output in outputs.values():
-            for index, image in enumerate(node_output.get("images", [])):
+            for _index, image in enumerate(node_output.get("images", [])):
                 filename = image.get("filename")
                 if not filename:
                     continue

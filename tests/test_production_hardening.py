@@ -477,7 +477,7 @@ class TestPreflightIntegration:
         service = LoRATrainingService(projects=project_service)
         result = service.hardware_presets()
         assert "hardware" in result and "presets" in result
-        for preset_id, variants in result["presets"].items():
+        for _preset_id, variants in result["presets"].items():
             assert set(variants) >= {"label", "conservative", "balanced", "quality"}
             # Conservative is always at least as light as quality.
             cons = variants["conservative"]

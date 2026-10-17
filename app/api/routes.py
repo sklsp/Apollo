@@ -346,14 +346,14 @@ async def upload_document(
 
         return DocumentResponse(id=doc_id, source=file.filename)
 
-    except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="File must be valid UTF-8 text")
+    except UnicodeDecodeError as err:
+        raise HTTPException(status_code=400, detail="File must be valid UTF-8 text") from err
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except OllamaServiceError as exc:
         raise exc.to_http_exception() from exc
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error uploading document: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading document: {str(e)}") from e
     finally:
         if temp_path and os.path.exists(temp_path):
             os.unlink(temp_path)
