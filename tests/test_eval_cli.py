@@ -51,7 +51,7 @@ class TestRun:
         report = json.loads(out.read_text(encoding="utf-8"))
         assert report["config"]["mode"] == "index"
         assert report["config"]["embedder_model"] == "fake-embed"
-        assert report["config"]["backend"] == "fake"
+        assert report["config"]["embedding_backend"] == "fake"
         assert report["summary"]["num_questions"] == 48
         assert report["summary"]["k"] == 3
 
@@ -96,6 +96,24 @@ class TestRun:
 
         assert code == 1
         assert not out.exists()
+
+
+    def test_fallback_backend_records_actual_model(self, tmp_path):
+        """When Ollama is down and sentence-transformers serves the vectors, the
+        report must name the model that actually ran."""
+
+        class FallbackClient(FakeServiceEmbedder):
+            backend = "sentence-transformers"
+            fallback_model = "all-MiniLM-L6-v2"
+
+        out = tmp_path / "fallback.json"
+
+        code = run(["--top-k", "3", "--out", str(out)], client=FallbackClient())
+
+        assert code == 0
+        config = json.loads(out.read_text(encoding="utf-8"))["config"]
+        assert config["embedding_backend"] == "sentence-transformers"
+        assert config["embedder_model"] == "all-MiniLM-L6-v2"
 
 
 class TestMain:

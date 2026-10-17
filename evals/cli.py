@@ -89,7 +89,10 @@ def run(argv: list[str] | None = None, *, client: EmbeddingClient | None = None)
             config["num_chunks"] = result.num_chunks
 
         # Read after indexing so the backend probe is free (already embedded).
-        config["backend"] = client.backend
+        config["embedding_backend"] = client.backend
+        if client.backend == "sentence-transformers":
+            # Ollama was unavailable; record what actually produced the vectors.
+            config["embedder_model"] = client.fallback_model
         report = build_report(results, k=top_k, config=config)
         path = write_report(report, args.out)
     except (DatasetError, ValueError) as exc:
