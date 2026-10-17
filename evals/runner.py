@@ -1,9 +1,11 @@
-"""Retrieval runner for the RAG evaluation (portfolio item 21).
+"""Retrieval runner for the RAG evaluation (portfolio items 21-22).
 
 Runs every question in an ``EvalDataset`` through a built index and produces
 one scored-ready ``QuestionResult`` per question. The embedder is injected so
 tests can use a deterministic fake; the CLI passes the real
-``EmbeddingClient``.
+``EmbeddingClient``. Item 22 adds the same run against a live ``RAGService``,
+so an eval can measure the production pipeline (its chunking defaults and
+query path) instead of a bare store + embedder pair.
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ from __future__ import annotations
 import numpy as np
 
 from app.core.config import settings
+from app.services.rag.service import RAGService
 from app.services.rag.vector_store import VectorStore
 from evals.dataset import EvalDataset
 from evals.index import BatchEmbedder
@@ -61,6 +64,55 @@ def run_retrieval(
     results: list[QuestionResult] = []
     for question in dataset.questions:
         retrieved = retrieve_doc_ids(store, embedder, question.question, top_k=top_k)
+        results.append(
+            QuestionResult(
+                question_id=question.id,
+                retrieved_doc_ids=retrieved,
+                relevant_doc_ids=tuple(question.source_docs),
+            )
+        )
+    return results
+
+
+def index_dataset(service: RAGService, dataset: EvalDataset) -> int:
+    """Index every corpus document into *service* through its production path.
+
+    Uses ``add_document`` with the service's own chunking defaults so the eval
+    measures exactly what the app indexes. Returns the total number of chunks
+    stored (0 for documents whose content was already current).
+    """
+    total = 0
+    for doc in dataset.docs:
+        total += service.add_document(
+            doc.text, {"doc_id": doc.doc_id, "filename": doc.title}
+        )
+    return total
+
+
+def run_retrieval_on_service(
+    dataset: EvalDataset,
+    service: RAGService,
+    *,
+    top_k: int | None = None,
+) -> list[QuestionResult]:
+    """Run every question through the real ``RAGService.query``.
+
+    Same contract as :func:`run_retrieval` (dataset order, raw chunk ranks,
+    ground truth from ``source_docs``), but retrieval goes through the
+    production service instead of a bare store + embedder pair. An empty index
+    yields empty retrievals rather than an error, mirroring the app.
+    Raises:
+        ValueError: if the dataset has no questions.
+    """
+    if top_k is None:
+        top_k = settings.rag_top_k
+    if not dataset.questions:
+        raise ValueError("dataset has no questions to run")
+
+    results: list[QuestionResult] = []
+    for question in dataset.questions:
+        hits = service.query(question.question, top_k=top_k)
+        retrieved = tuple(hit.doc_id for hit in hits)
         results.append(
             QuestionResult(
                 question_id=question.id,
