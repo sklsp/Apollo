@@ -262,8 +262,8 @@ class RAGService:
         self._rebuild_version_map()
 
     def _quarantine_files(self) -> None:
-        from pathlib import Path
         import shutil
+        from pathlib import Path
 
         root = Path(self.persist_dir)
         quarantine = root / "quarantined"

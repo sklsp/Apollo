@@ -7,9 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from app.services.run_history import RunHistory
 from app.services.dashboard import build_dashboard
-
+from app.services.run_history import RunHistory
 
 # ============================================
 # TRAINING RUN HISTORY
@@ -350,7 +349,6 @@ class TestDashboard:
         """One failing subsystem must not blank the whole dashboard."""
         from app.core.jobs import JobStore
         from app.services.comfyui_service import ComfyUIService
-        from app.services.document_service import DocumentService
         from app.services.lora_dataset_service import LoRAProjectService
         from app.services.lora_training_service import LoRATrainingService
         from app.services.rag.service import RAGService
@@ -378,8 +376,8 @@ class TestDashboard:
 
 class TestRagDebug:
     def test_debug_query_shows_full_pipeline(self, tmp_path):
-        from tests.test_production_hardening import FakeEmbeddingClient
         from app.services.rag.service import RAGService
+        from tests.test_production_hardening import FakeEmbeddingClient
 
         service = RAGService(FakeEmbeddingClient(), persist_dir=str(tmp_path / "rag"))
         service.add_document("Debug target content. " * 10,
@@ -392,8 +390,8 @@ class TestRagDebug:
         assert "debug target" in view["context"].lower() or view["context"]
 
     def test_debug_query_on_empty_index_is_honest(self, tmp_path):
-        from tests.test_production_hardening import FakeEmbeddingClient
         from app.services.rag.service import RAGService
+        from tests.test_production_hardening import FakeEmbeddingClient
 
         service = RAGService(FakeEmbeddingClient(), persist_dir=str(tmp_path / "rag"))
         view = service.query_debug("anything")

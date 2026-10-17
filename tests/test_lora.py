@@ -16,7 +16,7 @@ import pytest
 import yaml
 
 from app.core.exceptions import AIToolkitError, LoRAProjectError, OllamaServiceError
-from app.services.lora_dataset_service import LoRAProjectService, _clean_caption
+from app.services.lora_dataset_service import _clean_caption
 from app.services.lora_training_service import (
     AIToolkitProcess,
     LoRATrainingService,

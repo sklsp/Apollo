@@ -159,7 +159,7 @@ def create_app(service: object | None = None) -> FastAPI:
         print("=" * 70)
         print("\nREGISTERED ENDPOINTS:")
         print("-" * 70)
-        
+
         # Collect all routes (including nested included routers)
         routes = {}
         for route in _iter_api_routes(app.routes):
@@ -169,13 +169,13 @@ def create_app(service: object | None = None) -> FastAPI:
                 if path not in routes:
                     routes[path] = []
                 routes[path].append(methods)
-        
+
         # Print routes organized by path
         for path in sorted(routes.keys()):
             methods_list = routes[path]
             for methods in methods_list:
                 print(f"  {methods:10} {path}")
-        
+
         print("-" * 70)
         print("\nCRITICAL ROUTES:")
         print("  POST    /chat              <- Frontend calls this")
@@ -184,18 +184,18 @@ def create_app(service: object | None = None) -> FastAPI:
         print("  GET     /documents         <- Load documents")
         print("  GET     /health            <- Health check")
         print("-" * 70)
-        
+
         # Verify /chat endpoint exists
         chat_route_found = any(
             r.path == "/chat" and "POST" in r.methods
             for r in _iter_api_routes(app.routes)
         )
-        
+
         if chat_route_found:
             print("\n[OK] /chat endpoint is REGISTERED")
         else:
             print("\n[WARN] /chat endpoint NOT FOUND!")
-        
+
         print("\nFrontend API base:")
         print("   Same origin as this server (localhost, LAN, or Cloudflare tunnel)")
         print("   POST /chat with JSON: {\"prompt\": \"...\", \"session_id\": \"...\", \"model\": \"...\"}")

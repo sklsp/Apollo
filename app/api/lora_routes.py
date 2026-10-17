@@ -122,7 +122,6 @@ def hardware_info(
 ) -> dict:
     """What this machine can run: GPU, VRAM, RAM, disk."""
     from app.core.config import settings as app_settings
-
     from app.services.hardware import detect_hardware
 
     return detect_hardware(

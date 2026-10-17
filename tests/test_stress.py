@@ -9,10 +9,8 @@ default suite (marked slow) — run explicitly with:
 from __future__ import annotations
 
 import io
-import json
 import random
 import time
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -90,8 +88,8 @@ class TestLargeDataset:
 
 class TestLargeDocument:
     def test_large_document_chunk_index_persist_retrieve(self, tmp_path):
-        from tests.test_production_hardening import FakeEmbeddingClient
         from app.services.rag.service import RAGService
+        from tests.test_production_hardening import FakeEmbeddingClient
 
         # ~200 KB of text -> roughly 250+ chunks at default settings.
         paragraph = (

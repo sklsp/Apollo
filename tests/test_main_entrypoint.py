@@ -1,4 +1,3 @@
-import importlib
 
 
 def test_main_defaults_to_interactive_agent(monkeypatch) -> None:

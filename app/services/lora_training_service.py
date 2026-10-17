@@ -24,7 +24,7 @@ import yaml
 
 from app.core.config import settings
 from app.core.exceptions import AIToolkitError, LoRAProjectError
-from app.core.jobs import Job, JobStatus, JobStore
+from app.core.jobs import Job, JobStore
 from app.core.paths import is_safetensors, safe_join
 from app.services.lora_dataset_service import LoRAProjectService
 from app.services.run_history import RunHistory
@@ -605,7 +605,7 @@ class LoRATrainingService:
 
         # Record the run with full provenance before anything can fail.
         try:
-            from app.services.hardware import HardwareInfo, detect_hardware
+            from app.services.hardware import detect_hardware
             from app.services.training_preflight import advise
 
             images = self.projects.list_images(project_id)

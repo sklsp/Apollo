@@ -20,7 +20,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.services.hardware import HardwareInfo, detect_hardware, detect_disk_free_gb
+from app.services.hardware import HardwareInfo, detect_disk_free_gb, detect_hardware
 
 logger = logging.getLogger(__name__)
 

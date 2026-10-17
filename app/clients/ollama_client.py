@@ -73,7 +73,7 @@ class OllamaClient:
         # Use chat completion with system role for simple prompt completion
         messages = [{"role": "user", "content": prompt}]
         response = self.chat_completion(model=model, messages=messages)
-        
+
         # Convert OpenAI response format to Ollama generate format for compatibility
         if "choices" in response and response["choices"]:
             return {

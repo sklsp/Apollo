@@ -1,6 +1,6 @@
 """Memory service for managing chat history per session."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TypedDict
 
 from app.core.persistence import JsonPersist
@@ -19,7 +19,7 @@ class Message(TypedDict):
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class MemoryService:

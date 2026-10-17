@@ -14,10 +14,9 @@ import pytest
 from PIL import Image
 
 from app.services.dataset_validation import classify_pair, validate_dataset
-from app.services.hardware import HardwareInfo, GPUInfo
+from app.services.hardware import GPUInfo, HardwareInfo
 from app.services.rag.service import RAGService, content_hash
 from app.services.training_preflight import advise, diagnose_failure, estimate_vram_mb
-
 
 # ============================================
 # Deterministic embedding provider
@@ -180,7 +179,6 @@ class TestPersistentIndex:
         assert second.query("fresh under new")
 
     def test_corrupted_index_recovers_with_quarantine(self, tmp_path):
-        import json
         from pathlib import Path
 
         persist_dir = Path(tmp_path / "rag")

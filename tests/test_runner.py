@@ -1,9 +1,9 @@
-from ai_agent.tools import summarize, find_keywords, answer_questions
+from ai_agent.tools import answer_questions, find_keywords, summarize
 
 
 def main():
     try:
-        with open('data/company_document.txt', 'r', encoding='utf-8') as f:
+        with open('data/company_document.txt', encoding='utf-8') as f:
             doc = f.read()
     except FileNotFoundError:
         print('data/company_document.txt not found in project/data/')

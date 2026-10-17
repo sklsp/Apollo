@@ -350,7 +350,6 @@ class TestGeneration:
         service.save_workflow("flow", sample_graph())
         graph, _ = service.build_graph("flow", {"prompt": "x"})
 
-        from app.core.jobs import Job
         job = service.jobs.create("comfyui_generation")
         service._run_generation(job, graph)
 

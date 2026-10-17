@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import importlib.util
 import socket
-import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
