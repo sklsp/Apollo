@@ -87,7 +87,35 @@ aggregate `summary`, and one entry per question (retrieved + relevant doc ids an
 per-question metrics). Grid reports carry the same config plus one flat row per
 cell. Output is deterministic — no timestamps, floats rounded to four decimals —
 so two runs over identical inputs diff cleanly, which is what the CI regression
-gate relies on.
+gate relies on (below).
+
+## Regression gate
+
+`tests/test_eval_regression.py` is the CI gate for retrieval quality. It runs
+the real service-mode pipeline — production chunking, vector retrieval, top_k=4
+— with the sentence-transformers backend **pinned** (an `OllamaClient` stub that
+always reports unreachable, so Ollama is never probed and results do not depend
+on whether it happens to be running), then compares against the committed
+baseline [`evals/baselines/vector_service.json`](../evals/baselines/vector_service.json):
+
+- summary metrics (`mean_recall_at_k`, `mrr`, `hit_rate_at_k`) may improve but
+  must not drop by more than float noise (tolerance 1e-3 — well below the
+  granularity of a single question flipping, ~0.02);
+- no question that had a hit@4 in the baseline may lose it;
+- the run's backend, retrieval mode, cutoff and production chunking must match
+  the baseline's `config` block (like-for-like comparison).
+
+It runs as part of the normal pytest suite (~5 s) and needs no Ollama or GPU.
+After an **intentional** change to chunking, embeddings or retrieval logic,
+re-baseline with:
+
+```bash
+python -m scripts.regen_eval_baseline
+```
+
+and commit the updated `evals/baselines/vector_service.json` alongside that
+change. The script pins the same fallback backend, so baselines are reproducible
+on any machine with the requirements installed.
 
 ## Baselines (2026-10-17)
 
@@ -137,4 +165,6 @@ human review (they are not scored by retrieval metrics).
 The harness itself is covered by `tests/test_eval_*.py` (dataset validation,
 metrics math, index building with a deterministic fake embedder, runner and CLI
 wiring including grid and hybrid-mode routing) — all of it runs without Ollama or
-a GPU.
+a GPU. The one exception in spirit: the regression gate
+(`test_eval_regression.py`) loads the real MiniLM model on CPU so it measures
+actual retrieval quality against the committed baseline (see above).
