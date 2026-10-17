@@ -1,0 +1,26 @@
+# Apollo — local development stack (portfolio item 40)
+#
+#   docker compose up --build
+#
+# The API runs in a container; Ollama and ComfyUI run on the HOST and are
+# reached via host.docker.internal (provided by Docker Desktop out of the box).
+# On Linux add to the service:
+#   extra_hosts: ["host.docker.internal:host-gateway"]
+
+services:
+  apollo:
+    build: .
+    image: apollo
+    ports:
+      - "8000:8000"
+    environment:
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      COMFYUI_BASE_URL: http://host.docker.internal:8188
+      # Point these at host paths if you want the container to see your local
+      # ComfyUI LoRA folder / ai-toolkit install (forward slashes work):
+      # COMFYUI_LORA_DIR: C:/ComfyUI/models/loras
+    volumes:
+      - apollo-data:/app/data
+
+volumes:
+  apollo-data:
