@@ -152,6 +152,35 @@ def set_setting(tmp_settings):
 
 
 @pytest.fixture
+def synthetic_dataset(tmp_path):
+    """Two documents - one single-chunk, one multi-chunk - plus a question.
+
+    Shared by the eval index/runner tests so they exercise identical content;
+    see ``tests/fakes.py`` for the matching deterministic embedder.
+    """
+    import json
+
+    from evals.dataset import load_dataset
+
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    short = (
+        "# Alpha\nAlpha covers one narrow topic in a single short paragraph. "
+        "It stays well under the chunk size.\n"
+    )
+    long_text = " ".join(
+        f"Beta sentence number {i} adds detail to the beta document." for i in range(1, 25)
+    )
+    (corpus / "alpha.md").write_text(short, encoding="utf-8")
+    (corpus / "beta.md").write_text("# Beta\n" + long_text, encoding="utf-8")
+
+    questions = tmp_path / "questions.json"
+    entry = {"id": "q01", "question": "What does Alpha cover?", "source_docs": ["alpha"], "key_facts": ["f"]}
+    questions.write_text(json.dumps([entry]), encoding="utf-8")
+    return load_dataset(corpus_dir=corpus, questions_file=questions)
+
+
+@pytest.fixture
 def project_service(tmp_settings):
     from app.services.lora_dataset_service import LoRAProjectService
 

@@ -7,9 +7,6 @@ needed. One class pins the build against the committed corpus itself.
 
 from __future__ import annotations
 
-import hashlib
-import json
-
 import numpy as np
 import pytest
 
@@ -17,52 +14,7 @@ from app.core.config import settings
 from app.services.rag.chunking import chunk_text
 from evals.dataset import EvalDataset, load_dataset
 from evals.index import build_index
-
-
-def _unit_vector(text: str, dim: int) -> np.ndarray:
-    """Deterministic unit vector derived from the text content."""
-    seed = int.from_bytes(hashlib.sha256(text.encode("utf-8")).digest()[:8], "big")
-    rng = np.random.default_rng(seed)
-    vector = rng.standard_normal(dim).astype(np.float32)
-    return vector / np.linalg.norm(vector)
-
-
-class FakeEmbedder:
-    """Stand-in for ``EmbeddingClient``: content-hashed unit vectors.
-
-    Like the real client, output rows are L2-normalized, so inner products in
-    the flat index equal cosine similarity and a chunk scores 1.0 against its
-    own query vector.
-    """
-
-    def __init__(self, dim: int = 16) -> None:
-        self.dim = dim
-        self.calls: list[list[str]] = []
-
-    def embed_batch(self, texts: list[str]) -> np.ndarray:
-        self.calls.append(list(texts))
-        return np.vstack([_unit_vector(t, self.dim) for t in texts]).astype(np.float32)
-
-
-@pytest.fixture
-def synthetic_dataset(tmp_path):
-    """Two documents - one single-chunk, one multi-chunk - plus a question."""
-    corpus = tmp_path / "corpus"
-    corpus.mkdir()
-    short = (
-        "# Alpha\nAlpha covers one narrow topic in a single short paragraph. "
-        "It stays well under the chunk size.\n"
-    )
-    long_text = " ".join(
-        f"Beta sentence number {i} adds detail to the beta document." for i in range(1, 25)
-    )
-    (corpus / "alpha.md").write_text(short, encoding="utf-8")
-    (corpus / "beta.md").write_text("# Beta\n" + long_text, encoding="utf-8")
-
-    questions = tmp_path / "questions.json"
-    entry = {"id": "q01", "question": "Q?", "source_docs": ["alpha"], "key_facts": ["f"]}
-    questions.write_text(json.dumps([entry]), encoding="utf-8")
-    return load_dataset(corpus_dir=corpus, questions_file=questions)
+from tests.fakes import FakeEmbedder
 
 
 class TestBuildIndex:
@@ -79,6 +31,7 @@ class TestBuildIndex:
         result = build_index(synthetic_dataset, FakeEmbedder())
         assert result.chunks_per_doc["alpha"] == 1
         assert result.chunks_per_doc["beta"] >= 2
+
     def test_stored_chunks_carry_metadata_in_order(self, synthetic_dataset):
         result = build_index(synthetic_dataset, FakeEmbedder())
 
