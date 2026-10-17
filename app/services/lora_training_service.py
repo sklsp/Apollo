@@ -610,6 +610,9 @@ class LoRATrainingService:
 
             images = self.projects.list_images(project_id)
             project = self.projects.get_project(project_id)
+            # Read back what was actually written, so the recorded run matches
+            # the config file on disk (there is no local ``config`` here).
+            config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
             process_config = config["config"]["process"][0]
             hardware_info = detect_hardware(comfyui_base_url=settings.comfyui_base_url)
             hardware = hardware_info.to_dict()

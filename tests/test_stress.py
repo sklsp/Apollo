@@ -9,7 +9,6 @@ default suite (marked slow) — run explicitly with:
 from __future__ import annotations
 
 import io
-import random
 import time
 
 import numpy as np
@@ -33,7 +32,6 @@ class TestLargeDataset:
     def test_120_image_dataset_validation_under_30s(self, project_service, project):
         from app.services.dataset_validation import validate_dataset
 
-        rng = random.Random(42)
         images_meta = []
         store: dict[str, bytes] = {}
 
