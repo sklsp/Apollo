@@ -257,7 +257,9 @@ class ComfyUIService:
         graph = read_json(self._graph_path(workflow_id))
         if not isinstance(graph, dict):
             raise WorkflowError(f"Workflow '{workflow_id}' could not be read")
-        meta = read_json(self._map_path(workflow_id), default={}) or {}
+        meta = read_json(self._map_path(workflow_id), default={})
+        if not isinstance(meta, dict):
+            meta = {}
         return WorkflowInfo(
             id=workflow_id,
             name=meta.get("name", workflow_id.replace("_", " ").title()),
@@ -278,7 +280,9 @@ class ComfyUIService:
             raise WorkflowError(f"Workflow '{workflow_id}' is not valid JSON")
         validate_graph(graph)
 
-        meta = read_json(self._map_path(workflow_id), default={}) or {}
+        meta = read_json(self._map_path(workflow_id), default={})
+        if not isinstance(meta, dict):
+            meta = {}
         return graph, meta.get("inputs", {})
 
     def save_workflow(

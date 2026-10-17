@@ -121,13 +121,14 @@ class LoRAProjectService:
         slug = re.sub(r"[^a-z0-9_-]", "_", name.strip().lower()).strip("_")[:40] or "lora"
         project_id = f"{slug}_{uuid.uuid4().hex[:6]}"
 
+        overrides: dict[str, Any] = {"base_model": base_model} if base_model else {}
         project = LoRAProject(
             id=project_id,
             name=name.strip(),
             description=description,
             arch=arch,
             trigger_word=trigger_word.strip(),
-            **({"base_model": base_model} if base_model else {}),
+            **overrides,
         )
 
         root = safe_join(self.data_dir, project_id)
