@@ -50,6 +50,8 @@ jobs:
         # CPU-only torch first, so sentence-transformers does not pull the multi-GB CUDA build
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -r requirements.txt
-      - name: Run tests
-        run: python -m pytest
+          pip install -r requirements-dev.txt
+      - name: Run tests (with coverage)
+        # Coverage is reported for now; a minimum threshold will be added once the
+        # eval work has established what the number should protect.
+        run: python -m pytest --cov=app --cov-report=term-missing
