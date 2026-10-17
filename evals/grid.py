@@ -93,22 +93,25 @@ def run_grid(
     return cells
 
 
-def write_grid_report(cells: list[GridCell], path: Path | str, *, top_k: int) -> Path:
+def write_grid_report(
+    cells: list[GridCell], path: Path | str, *, top_k: int, config: dict[str, Any] | None = None
+) -> Path:
     """Write the grid results as deterministic JSON (same rules as item 23).
 
-    The file records *top_k* once at the top level and one row per cell in run
-    order; parent directories are created. Returns the resolved path.
+    The file records *top_k* once at the top level, an optional echoed *config*
+    block (embedder backend/model, ...), and one row per cell in run order;
+    parent directories are created. Returns the resolved path.
     Raises ``ValueError`` when there are no cells to write.
     """
     if not cells:
         raise ValueError("cannot write a grid report with zero cells")
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "schema_version": 1,
-        "top_k": top_k,
-        "cells": [cell.to_dict() for cell in cells],
-    }
+    payload: dict[str, Any] = {"schema_version": 1}
+    if config is not None:
+        payload["config"] = dict(config)
+    payload["top_k"] = top_k
+    payload["cells"] = [cell.to_dict() for cell in cells]
     target.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )

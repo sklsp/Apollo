@@ -28,6 +28,7 @@ class TestParser:
         assert args.chunk_size is None
         assert args.overlap is None
         assert args.service is False
+        assert args.grid is False
         assert str(args.out).endswith("rag_eval.json")
 
     def test_flags(self, tmp_path):
@@ -114,6 +115,27 @@ class TestRun:
         config = json.loads(out.read_text(encoding="utf-8"))["config"]
         assert config["embedding_backend"] == "sentence-transformers"
         assert config["embedder_model"] == "all-MiniLM-L6-v2"
+
+
+    def test_grid_mode_writes_one_row_per_cell(self, _fake_client, tmp_path):
+        out = tmp_path / "grid.json"
+
+        code = run(["--top-k", "3", "--out", str(out), "--grid"], client=_fake_client)
+
+        assert code == 0
+        report = json.loads(out.read_text(encoding="utf-8"))
+        assert report["config"]["mode"] == "grid"
+        assert report["top_k"] == 3
+        assert [c["chunk_size"] for c in report["cells"]] == [400, 600, 800, 1200]
+        assert all(c["num_questions"] == 48 and c["k"] == 3 for c in report["cells"])
+
+    def test_grid_rejects_combined_flags(self, _fake_client, tmp_path):
+        out = tmp_path / "bad.json"
+
+        code = run(["--grid", "--service", "--out", str(out)], client=_fake_client)
+
+        assert code == 1
+        assert not out.exists()
 
 
 class TestMain:
