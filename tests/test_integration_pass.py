@@ -77,7 +77,7 @@ class TestRunHistory:
         assert [r["id"] for r in runs] == [second["id"], first["id"]]
 
     def test_history_lives_inside_project_folder(self, project_service, project):
-        """Deleting the project removes its history — no orphan records."""
+        """Deleting the project removes its history - no orphan records."""
         history = RunHistory(project_service)
         history.create_run(
             project.id, config={}, base_model="m", trigger_word="", arch="sdxl",

@@ -38,7 +38,7 @@ _STEP_PATTERNS = (
 )
 _LOSS_PATTERN = re.compile(r"loss[=:\s]+([0-9]*\.?[0-9]+)", re.I)
 
-# Sensible per-architecture defaults. Only what is actually needed today —
+# Sensible per-architecture defaults. Only what is actually needed today -
 # new architectures get an entry here rather than branches sprinkled elsewhere.
 ARCH_DEFAULTS: dict[str, dict[str, Any]] = {
     "sdxl": {
@@ -494,7 +494,7 @@ class LoRATrainingService:
         from app.services.hardware import detect_hardware
         from app.services.training_preflight import advise
 
-        # Dataset checks first — they are cheap and independent of hardware.
+        # Dataset checks first - they are cheap and independent of hardware.
         checks: list[dict[str, Any]] = []
         try:
             images = self.projects.list_images(project_id)

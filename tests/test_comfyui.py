@@ -1,6 +1,6 @@
 """ComfyUI client, workflow handling, and generation submission.
 
-All tests run against a stub client — none of them require ComfyUI to be
+All tests run against a stub client - none of them require ComfyUI to be
 running, and none of them fabricate a successful generation.
 """
 

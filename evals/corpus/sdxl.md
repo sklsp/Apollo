@@ -4,13 +4,13 @@ Stable Diffusion XL, usually abbreviated SDXL, is a latent diffusion model relea
 
 ## Architecture changes over SD 1.5
 
-SDXL keeps the overall pipeline — text encoder, U-Net denoiser, VAE decoder — but scales each part up. The UNet is roughly three times larger than in SD 1.5 and uses a deeper transformer-style attention block called the "big" attention layer. The variational autoencoder compresses images by a factor of eight per spatial dimension into a latent tensor with sixteen channels, compared to four channels in SD 1.5.
+SDXL keeps the overall pipeline - text encoder, U-Net denoiser, VAE decoder - but scales each part up. The UNet is roughly three times larger than in SD 1.5 and uses a deeper transformer-style attention block called the "big" attention layer. The variational autoencoder compresses images by a factor of eight per spatial dimension into a latent tensor with sixteen channels, compared to four channels in SD 1.5.
 
 The text conditioning also changed: SDXL uses two CLIP encoders at once, an openai/clip-vit-large-patch14 model and an open_clip ViT-bigG model. The hidden states of both encoders are concatenated and fed into the UNet, which gives the model access to richer semantic information from the prompt than a single encoder can provide.
 
 ## Native resolution
 
-SDXL was trained primarily at 1024 by 1024 pixels. Generating at that square size is where the model performs best; other aspect ratios work but should stay close to roughly one megapixel in total area. Pushing SDXL far outside its training range — for example a very wide banner or an extremely tall portrait — tends to produce duplicated subjects, warped anatomy, and degraded text rendering.
+SDXL was trained primarily at 1024 by 1024 pixels. Generating at that square size is where the model performs best; other aspect ratios work but should stay close to roughly one megapixel in total area. Pushing SDXL far outside its training range - for example a very wide banner or an extremely tall portrait - tends to produce duplicated subjects, warped anatomy, and degraded text rendering.
 
 ## Practical notes
 

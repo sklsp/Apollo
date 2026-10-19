@@ -12,7 +12,7 @@ Parentheses increase the relative importance of the words inside them: "(red fox
 
 ## Negative prompts
 
-The negative prompt lists what should be avoided: "blurry, low quality, extra fingers, watermark". It works by conditioning the model to move away from those concepts during sampling. Keep it short — a wall of negative terms dilutes each one and can start fighting the positive prompt. For anatomy problems specifically, terms like "extra fingers", "deformed hands", and "bad anatomy" are the most effective entries.
+The negative prompt lists what should be avoided: "blurry, low quality, extra fingers, watermark". It works by conditioning the model to move away from those concepts during sampling. Keep it short - a wall of negative terms dilutes each one and can start fighting the positive prompt. For anatomy problems specifically, terms like "extra fingers", "deformed hands", and "bad anatomy" are the most effective entries.
 
 ## Style tokens
 

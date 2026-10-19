@@ -64,7 +64,7 @@ jobs:
       - name: Build image
         run: docker build -t apollo:ci .
       - name: Smoke test (start container, wait for /live)
-        # The app boots fine without Ollama — the embedding client falls back to
+        # The app boots fine without Ollama - the embedding client falls back to
         # sentence-transformers and the vector store starts empty. /live is the
         # dependency-free liveness probe; /health would 503 without Ollama.
         run: |

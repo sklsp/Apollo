@@ -4,7 +4,7 @@ Retrieval-augmented systems answer questions by finding the most similar stored 
 
 ## Embeddings
 
-A text embedding model maps a piece of text to a fixed-length list of floating-point numbers — for example 384 or 768 values. Texts with similar meaning land close together in this vector space, so similarity between two texts reduces to a geometric question about their vectors. The same model must be used to embed both the stored documents and the query; mixing embeddings from different models is meaningless because each model defines its own coordinate system.
+A text embedding model maps a piece of text to a fixed-length list of floating-point numbers - for example 384 or 768 values. Texts with similar meaning land close together in this vector space, so similarity between two texts reduces to a geometric question about their vectors. The same model must be used to embed both the stored documents and the query; mixing embeddings from different models is meaningless because each model defines its own coordinate system.
 
 ## Cosine similarity
 
@@ -12,8 +12,8 @@ The standard similarity measure is cosine similarity: the angle between two vect
 
 ## Flat indexes
 
-The simplest index stores all vectors in a dense array and computes the inner product with the query against every row — an exact brute-force search, often called a flat index. FAISS provides this as `IndexFlatIP` (inner product). Exact search costs time proportional to the number of stored vectors, but for tens or hundreds of thousands of short vectors it completes in milliseconds on CPU, which is why local single-user tools rarely need approximate methods at all.
+The simplest index stores all vectors in a dense array and computes the inner product with the query against every row - an exact brute-force search, often called a flat index. FAISS provides this as `IndexFlatIP` (inner product). Exact search costs time proportional to the number of stored vectors, but for tens or hundreds of thousands of short vectors it completes in milliseconds on CPU, which is why local single-user tools rarely need approximate methods at all.
 
 ## When to move on
 
-Approximate nearest-neighbor structures such as HNSW graphs trade a small loss in recall for large speedups at scale — millions of vectors and beyond. They add configuration (graph degree, construction ef) and memory overhead, so the rule of thumb is: stay flat until exact search measurably hurts latency, then switch.
+Approximate nearest-neighbor structures such as HNSW graphs trade a small loss in recall for large speedups at scale - millions of vectors and beyond. They add configuration (graph degree, construction ef) and memory overhead, so the rule of thumb is: stay flat until exact search measurably hurts latency, then switch.

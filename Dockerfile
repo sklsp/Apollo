@@ -1,4 +1,4 @@
-# Apollo — FastAPI backend (portfolio item 38)
+# Apollo - FastAPI backend (portfolio item 38)
 #
 # Build:   docker build -t apollo .
 # Run:     docker run --rm -p 8000:8000 -v apollo-data:/app/data \
@@ -17,14 +17,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # CPU-only torch first, so sentence-transformers does not pull the multi-GB
-# CUDA build (same trick as .github/workflows/ci.yml). Runtime deps only —
+# CUDA build (same trick as .github/workflows/ci.yml). Runtime deps only -
 # ruff/mypy/pytest stay out of the image.
 COPY requirements.txt ./
 RUN pip install torch --index-url https://download.pytorch.org/whl/cpu \
     && pip install -r requirements.txt
 
 # Run as an unprivileged user; /app/data is a volume for runtime state
-# (LoRA library, generated images, jobs.json — created at startup). The dir
+# (LoRA library, generated images, jobs.json - created at startup). The dir
 # must exist in the image owned by appuser: Docker initializes an empty
 # volume from the image contents on first run, which preserves ownership.
 RUN useradd --create-home appuser \

@@ -4,7 +4,7 @@ Apollo automates the path from a folder of images to a trained LoRA adapter. The
 
 ## Dataset quality control
 
-Before anything is trained on, every image in the project folder passes automated checks. Images are decoded to verify they are not corrupt, near-duplicates are detected by perceptual hash and flagged for removal, and resolution is checked against a minimum threshold so tiny thumbnails do not silently degrade the dataset. The result is a quality report listing how many images passed, which were dropped, and why — the user reviews this before training starts.
+Before anything is trained on, every image in the project folder passes automated checks. Images are decoded to verify they are not corrupt, near-duplicates are detected by perceptual hash and flagged for removal, and resolution is checked against a minimum threshold so tiny thumbnails do not silently degrade the dataset. The result is a quality report listing how many images passed, which were dropped, and why - the user reviews this before training starts.
 
 ## Captioning
 
@@ -16,4 +16,4 @@ Apollo writes a training configuration file in the YAML format expected by the O
 
 ## Execution and results
 
-Training runs as a supervised background job: Apollo starts the toolkit process, polls its progress output, and records status transitions (queued, running, completed, failed) in its local job store. When training finishes, the resulting adapter file is copied into the LoRA library where it becomes selectable in generation workflows with an adjustable strength slider. Failed jobs keep their log files so the cause — usually out-of-memory or a path error — can be inspected without rerunning.
+Training runs as a supervised background job: Apollo starts the toolkit process, polls its progress output, and records status transitions (queued, running, completed, failed) in its local job store. When training finishes, the resulting adapter file is copied into the LoRA library where it becomes selectable in generation workflows with an adjustable strength slider. Failed jobs keep their log files so the cause - usually out-of-memory or a path error - can be inspected without rerunning.

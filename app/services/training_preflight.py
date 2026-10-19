@@ -2,12 +2,12 @@
 
 The advisor classifies configurations into four honest buckets:
 
-* ``ok``        — likely safe
-* ``heavy``     — potentially heavy; may work depending on the model
-* ``risky``     — high risk of OOM or extreme runtime
-* ``unsupported`` — cannot run here at all (e.g. no accelerator configured)
+* ``ok``        - likely safe
+* ``heavy``     - potentially heavy; may work depending on the model
+* ``risky``     - high risk of OOM or extreme runtime
+* ``unsupported`` - cannot run here at all (e.g. no accelerator configured)
 
-It never modifies the user's configuration and never guarantees a fit — VRAM
+It never modifies the user's configuration and never guarantees a fit - VRAM
 use depends on the base model, sequence caching and AI Toolkit internals that
 no external estimator can see. The raw error from a failed run is always kept
 alongside the translated explanation.
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Rough VRAM pressure model for LoRA fine-tuning (rank <= 64, adamw8bit).
 # These are heuristics calibrated against AI Toolkit's documented examples,
-# not guarantees — their purpose is ranking configs, not predicting exact use.
+# not guarantees - their purpose is ranking configs, not predicting exact use.
 VRAM_BASE_MB = {          # per resolution bucket, batch 1
     "low":    6 * 1024,   # <= 512px
     "medium": 9 * 1024,   # <= 768px

@@ -46,7 +46,7 @@ def phase2() -> None:
     entry = next(
         (d for d in status["indexed_documents"] if d["doc_id"] == "doc_0"), None)
     print("restored doc record:", entry)
-    print("PHASE2 OK — persistent index verified")
+    print("PHASE2 OK - persistent index verified")
 
 
 if __name__ == "__main__":

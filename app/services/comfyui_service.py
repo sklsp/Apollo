@@ -6,7 +6,7 @@ Python:
 ``workflows/<id>.json``      raw ComfyUI **API-format** export (Save (API Format))
 ``workflows/<id>.map.json``  which node/field each logical input writes to
 
-Node ids are never hardcoded here — everything goes through the mapping.
+Node ids are never hardcoded here - everything goes through the mapping.
 """
 
 from __future__ import annotations
@@ -405,7 +405,7 @@ class ComfyUIService:
     def _save_outputs(self, job_id: str, outputs: dict) -> list[str]:
         """Copy ComfyUI's images into our own managed folder.
 
-        The browser is never handed a ComfyUI filesystem path — it gets a
+        The browser is never handed a ComfyUI filesystem path - it gets a
         filename that only resolves inside ``generated_dir``.
         """
         saved: list[str] = []
@@ -598,7 +598,7 @@ class ComfyUIService:
         Picks (or validates) a workflow with a LoRA node, checks that ComfyUI
         can actually see the file, and returns a prefilled
         :class:`GenerationRequest`-shaped payload for ``POST /comfyui/generate``.
-        No generation is queued here — the user still presses Generate.
+        No generation is queued here - the user still presses Generate.
         """
         workflows = self.list_workflows()
         candidates = [w for w in workflows if "lora_name" in w.supported_inputs]

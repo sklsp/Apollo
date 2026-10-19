@@ -366,7 +366,7 @@ class LoRAProjectService:
             if project.trigger_word and project.trigger_word.lower() not in caption.lower():
                 caption = f"{project.trigger_word}, {caption}"
 
-            # Saved but NOT marked edited — the user still reviews and confirms.
+            # Saved but NOT marked edited - the user still reviews and confirms.
             self._write_caption_unmarked(project_id, image.id, caption)
             results.append({"image_id": image.id, "caption": caption, "skipped": False})
 

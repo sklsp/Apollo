@@ -14,7 +14,7 @@ Design constraints (local-first, single user):
   loading an index built with a different model is refused rather than silently
   mixing incompatible vectors.
 * **Recoverable.** If the FAISS file is missing or unreadable but chunk
-  metadata survives, the store quarantines the bad files and reports the loss —
+  metadata survives, the store quarantines the bad files and reports the loss -
   the caller (RAGService) decides to re-embed from persisted documents.
 """
 

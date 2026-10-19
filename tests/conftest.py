@@ -42,8 +42,8 @@ def _install_shared_embedding_model() -> None:
     once per instance (app/services/rag/embeddings.py), and sentence-transformers
     6.x keeps no class-level cache, so every RAGService construction re-reads the
     model from disk (~3-6 s each; ~14 s cold including the torch import). The
-    tests never assert on vector values or on how often a model is loaded — only
-    that an embedding backend exists and works — so sharing one real instance
+    tests never assert on vector values or on how often a model is loaded - only
+    that an embedding backend exists and works - so sharing one real instance
     preserves behaviour while removing the suite's dominant cost. Ollama itself
     stays genuinely unreachable: every client still attempts (and fails) its HTTP
     probe before falling back.
@@ -86,8 +86,8 @@ def fast_external_timeouts():
 
     On this machine a connect to a closed localhost port is refused only after
     ~2-4 s (delayed RST), so every real-client probe in the suite pays that delay
-    on top of its work. The tests assert on outcomes — unreachable services
-    surface as errors, 503s or fallbacks — not on how long an attempt took, and
+    on top of its work. The tests assert on outcomes - unreachable services
+    surface as errors, 503s or fallbacks - not on how long an attempt took, and
     none of them read these settings directly (the one test that needs specific
     values sets them itself via ``set_setting``). Originals are restored after
     each test.

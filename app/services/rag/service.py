@@ -2,7 +2,7 @@
 
 The vector index is persistent: chunks, vectors and index metadata live under
 ``DATA_DIR/rag/`` and are reloaded on startup, so a restart does not re-embed
-the knowledge base. Indexing is incremental — a document is only embedded when
+the knowledge base. Indexing is incremental - a document is only embedded when
 its content hash differs from the version already in the index.
 
 The BM25 keyword index used for hybrid retrieval is derived from stored chunk
@@ -128,7 +128,7 @@ class RAGService:
         *,
         force: bool = False,
     ) -> int:
-        """Chunk, embed, and index a document — incrementally.
+        """Chunk, embed, and index a document - incrementally.
 
         When the same ``doc_id`` is already indexed with the identical content
         hash and embedding model, nothing is re-embedded and 0 is returned.

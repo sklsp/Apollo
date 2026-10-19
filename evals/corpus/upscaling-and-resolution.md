@@ -4,7 +4,7 @@ Diffusion models generate at a fixed native resolution; getting larger or sharpe
 
 ## Why not just generate big?
 
-Generating directly at 4K would require a latent canvas far outside the model's training distribution: subjects duplicate, anatomy breaks down, and memory usage grows with pixel count. The standard approach is to generate at native resolution — 1024 by 1024 for SDXL — and then upscale the result with a dedicated upscaler network.
+Generating directly at 4K would require a latent canvas far outside the model's training distribution: subjects duplicate, anatomy breaks down, and memory usage grows with pixel count. The standard approach is to generate at native resolution - 1024 by 1024 for SDXL - and then upscale the result with a dedicated upscaler network.
 
 ## Upscaler networks
 
@@ -16,4 +16,4 @@ Upscaling a full 4K canvas in one go can exceed GPU memory, so upscalers run in 
 
 ## Two-stage refinement
 
-A common high-quality recipe is: generate at native resolution, upscale 2x with a strong upscaler, then run a light diffusion pass over the upscaled image (image-to-image with low denoise strength around 0.3 to 0.4). The second stage lets the diffusion model re-render fine detail — skin texture, fabric weave, foliage — at the higher resolution instead of trusting the upscaler's hallucinated detail alone. This is slower but usually the best-looking result for hero images.
+A common high-quality recipe is: generate at native resolution, upscale 2x with a strong upscaler, then run a light diffusion pass over the upscaled image (image-to-image with low denoise strength around 0.3 to 0.4). The second stage lets the diffusion model re-render fine detail - skin texture, fabric weave, foliage - at the higher resolution instead of trusting the upscaler's hallucinated detail alone. This is slower but usually the best-looking result for hero images.

@@ -14,4 +14,4 @@ The **rank** controls how much information the adapter can carry. Low ranks (4 t
 
 ## Why LoRA instead of full fine-tuning
 
-A LoRA for SDXL typically occupies 10 to 200 megabytes on disk versus several gigabytes for a full checkpoint. It trains in minutes to an hour on a single consumer GPU, and multiple LoRAs can be stacked on the same base model at generation time with independent strength sliders — something impossible when each variant is a separate full checkpoint.
+A LoRA for SDXL typically occupies 10 to 200 megabytes on disk versus several gigabytes for a full checkpoint. It trains in minutes to an hour on a single consumer GPU, and multiple LoRAs can be stacked on the same base model at generation time with independent strength sliders - something impossible when each variant is a separate full checkpoint.

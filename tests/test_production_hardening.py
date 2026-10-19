@@ -27,7 +27,7 @@ class FakeEmbeddingClient:
     """Deterministic stand-in for EmbeddingClient.
 
     Hashes text into a fixed-dimension vector so the same text always embeds
-    identically and different text differs — enough for real FAISS behaviour.
+    identically and different text differs - enough for real FAISS behaviour.
     """
 
     model = "fake-embed-model"

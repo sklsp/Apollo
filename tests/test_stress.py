@@ -1,7 +1,7 @@
 """Stress test: 120-image dataset validation + large document indexing.
 
 Measures wall time and peak behavior; prints a summary. Not part of the
-default suite (marked slow) — run explicitly with:
+default suite (marked slow) - run explicitly with:
 
     pytest tests/test_stress.py -m slow -v
 """

@@ -117,7 +117,7 @@ def _announce_public_url(url: str) -> None:
     """Print, copy, and open the public dashboard URL."""
     link = _with_token(url)
     print("\n" + "=" * 70)
-    print("  APOLLO — LIVE")
+    print("  APOLLO - LIVE")
     print("=" * 70)
     print(f"\n  Local:   {_with_token(f'http://localhost:{PORT}')}")
     print(f"  Public:  {link}")
@@ -175,7 +175,7 @@ def _wait_for_backend(timeout: float = 45.0) -> StartupResult:
 
     Readiness semantics:
 
-    * **/live** decides startup success — it only means "the HTTP server is
+    * **/live** decides startup success - it only means "the HTTP server is
       up". Optional dependencies (Ollama etc.) being down must NOT fail the
       launch, so any HTTP response (including 503 from /health) counts as the
       process being alive.
@@ -247,13 +247,13 @@ def _report_startup_failure(result: StartupResult) -> None:
             f"    - Another process already holds port {PORT}\n"
             "      (check with: netstat -ano | findstr "
             f"\":{PORT}.*LISTENING\")\n"
-            "    - The app failed during import/startup — see [api] output above\n"
+            "    - The app failed during import/startup - see [api] output above\n"
             "    - Slow first start (embedding model download)",
             flush=True,
         )
     elif not proc_alive:
         print(
-            "\n  The API process exited during startup — see the [api] output\n"
+            "\n  The API process exited during startup - see the [api] output\n"
             "  above for the traceback.",
             flush=True,
         )
@@ -373,7 +373,7 @@ def _monitor() -> int:
 def main() -> int:
     """Entry point for the all-in-one dev launcher."""
     print("=" * 70)
-    print("  APOLLO — STARTUP")
+    print("  APOLLO - STARTUP")
     print("=" * 70)
     print(f"  Project:  {PROJECT_ROOT}")
     print(f"  Backend:  {UVICORN_APP} on {HOST}:{PORT}")
@@ -421,7 +421,7 @@ def main() -> int:
     def _local_fallback() -> None:
         if not _url_announced.wait(timeout=60):
             print(
-                f"\nTunnel URL not detected yet — opening local dashboard "
+                f"\nTunnel URL not detected yet - opening local dashboard "
                 f"http://localhost:{PORT}\n",
                 flush=True,
             )

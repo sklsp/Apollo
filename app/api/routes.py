@@ -71,7 +71,7 @@ def get_rag_service(request: Request) -> RAGService:
 def live() -> dict:
     """Process liveness probe: the HTTP server is up and responding.
 
-    Deliberately dependency-free — Ollama/ComfyUI/AI Toolkit being down does
+    Deliberately dependency-free - Ollama/ComfyUI/AI Toolkit being down does
     not make the API "not started". The launcher uses this to decide whether
     startup succeeded; `/health` reports dependency state separately.
     """
@@ -111,7 +111,7 @@ def health(service: LLMService = Depends(get_llm_service)) -> HealthResponse:
     try:
         payload = service.health_check()
     except OllamaServiceError as exc:
-        # A structured 503 with setup guidance, not a bare error — the UI
+        # A structured 503 with setup guidance, not a bare error - the UI
         # renders this as an actionable card rather than a dead endpoint.
         base_url = getattr(getattr(service, "client", None), "base_url",
                            settings.ollama_base_url)
@@ -171,7 +171,7 @@ def rag_debug_query(
     """Developer view of one retrieval: query → chunks → scores → context.
 
     Shows exactly what the model would see for this question. Not used by the
-    normal chat flow — it exists to explain why an answer came out the way it
+    normal chat flow - it exists to explain why an answer came out the way it
     did.
     """
     if not q.strip():

@@ -8,7 +8,7 @@ When a document is added, its text is split into overlapping chunks of 800 chara
 
 ## The index
 
-Vectors live in a FAISS flat inner-product index on disk under the application data directory. Embeddings are L2-normalized before storage, which makes the inner product equivalent to cosine similarity — higher score means more similar. The index file is written atomically (temp file plus rename) so a crash mid-save cannot corrupt the previous good state, and a small metadata file records the embedding model name and vector dimension; loading an index built with a different model is refused rather than silently mixing incompatible vectors.
+Vectors live in a FAISS flat inner-product index on disk under the application data directory. Embeddings are L2-normalized before storage, which makes the inner product equivalent to cosine similarity - higher score means more similar. The index file is written atomically (temp file plus rename) so a crash mid-save cannot corrupt the previous good state, and a small metadata file records the embedding model name and vector dimension; loading an index built with a different model is refused rather than silently mixing incompatible vectors.
 
 ## Retrieval at query time
 
