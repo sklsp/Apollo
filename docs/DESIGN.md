@@ -94,6 +94,45 @@ that run without Ollama or ComfyUI.
 **Trade-off:** The cookie lives for 30 days on any machine that opens the link, and there are no per-user accounts or revocation: losing the token means regenerating it in .env.
 **Where:** `app/main.py` (`require_access_token`).
 
+## Questions about numbers and weaknesses
+
+### How do you test code that depends on Ollama or ComfyUI without running them?
+
+I never start either service; the suite asserts what the app does when they are absent: errors, 503s, fallbacks. An autouse fixture in `tests/conftest.py` shrinks every external timeout to a few tenths of a second so probes at nonexistent services fail fast instead of hanging for seconds. Where a test needs success rather than failure it injects fakes: the deterministic sha256-seeded embedder from `tests/fakes.py`, StubClient and monkeypatched requests.request in `tests/test_comfyui.py`, or an OllamaClient stub that always reports unreachable in `tests/test_eval_regression.py`. Storage is isolated the same way, with tmp_settings pointing every writable storage root at a temp dir.
+
+### What happens to jobs when the server restarts mid-run?
+
+`JobStore` in `app/core/jobs.py` persists every job to a JSON file, so on startup it can see what was still queued or running. Those jobs are marked failed with "Interrupted by application restart" instead of being re-run or left spinning, because I do not know how far their side effects (a ComfyUI prompt, a training run) already went. The user sees the failure in the job list and can resubmit; nothing is retried silently.
+
+### How is the app protected when it is exposed through a tunnel?
+
+When APOLLO_ACCESS_TOKEN is set, `require_access_token` in `app/main.py` rejects every request that does not carry the token in the X-Apollo-Token header or cookie, with only /live and /health left open for probes. Opening the link once with ?token=... sets an HttpOnly cookie valid for 30 days so the browser stops asking. I chose a single shared token over accounts because this is one user's machine; the trade-off is that losing the token means regenerating it in .env, and there is no per-user revocation.
+
+### What would you change about chunking?
+
+I would keep the defaults: 800/150 was the best cell of the chunking grid on recall@4 (0.9896) and MRR (0.9757), so no number tells me to move it. What I would change is the boundary rule in `app/services/rag/chunking.py`: one long sentence can push a chunk well past its 800-character target, and I would cap that with a hard split instead of letting size drift. I would also like per-chunk version records rather than document-level ones, so editing one paragraph does not re-embed every other chunk in the same document.
+
+### How is a LoRA training config checked against hardware before it starts?
+
+`preflight()` in `app/services/lora_training_service.py` first checks the dataset (images present, captions written, base model set), then hands the options to `advise()` in `app/services/training_preflight.py`, which estimates VRAM from a resolution bucket (6 to 22 GB at batch 1) plus about 1.2 GB per extra batch slot and compares it against the GPU that `detect_hardware` in `app/services/hardware.py` finds. The report classifies the config as ok, heavy, risky or unsupported; only blocked or unsupported set can_proceed to false. I made it advisory on purpose: VRAM use depends on model internals no external estimator can see, so a "risky" verdict warns but never stops a run.
+
+### Where are the weak spots in this codebase?
+
+The flat index scans every chunk per query, so latency grows linearly with corpus size and I would hit a wall somewhere past tens of thousands of chunks (`app/services/rag/vector_store.py`). The two embedding backends produce different vector spaces, so switching models quarantines the whole index and retrieval returns nothing until every document is re-uploaded (`app/services/rag/embeddings.py`). Version records are per-document, so editing one paragraph re-embeds all of that document's chunks (`app/services/rag/service.py`), and the fused hybrid score is a rank statistic I cannot compare across queries or use as a threshold (`app/services/rag/fusion.py`). The job store also keeps only its 200 most recent jobs, so old history disappears on its own (`app/core/jobs.py`).
+
+## Numbers
+
+| What | Value |
+|------|-------|
+| Tests | 425 passed (latest full run) |
+| Coverage | TOTAL 81% (`pytest --cov=app`) |
+| Lint and type check | ruff clean; mypy clean |
+| Retrieval MiniLM hit@4 | 1.0000 (48 questions, k=4, production chunking) |
+| Retrieval MiniLM MRR | 0.9757 |
+| Hashing hit@4 | 0.2292 (sha256-seeded unit vectors, same harness) |
+| CI gate | one-sided: metrics may improve but not drop by more than 1e-3, and no question may lose its hit@4 against `evals/baselines/vector_service.json` |
+
+
 ## Questions people ask
 
 ### Why FAISS and not Chroma, pgvector or Qdrant?
