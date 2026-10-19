@@ -58,3 +58,38 @@ that run without Ollama or ComfyUI.
 **Why:** Chunks that end mid-sentence hand the model broken context, and overlap keeps material straddling a boundary available in both neighbouring chunks.
 **Trade-off:** The size target is approximate because one long sentence can push a chunk past it; the overlap also duplicates text, so the index holds more characters than the source documents contain.
 **Where:** `app/services/rag/chunking.py` (`chunk_text()`, `_overlap_tail()`, `_chunk_by_characters()`); defaults in `app/core/config.py` (RAG_CHUNK_SIZE, RAG_CHUNK_OVERLAP).
+
+### 6. Hybrid retrieval behind a flag, judged by the eval
+
+**Decision:** `query()` follows RAG_HYBRID: in the default auto mode it fuses vector similarity with BM25 keyword ranking via reciprocal rank fusion (k=60), while vector and keyword modes use only that single signal; hybrid degrades to plain vector search when no keyword index is available.
+**Why:** Embeddings generalize across paraphrase but miss distinctive terms like error codes, and rank fusion combines the two rankings without calibrating scores that live on incompatible scales.
+**Trade-off:** Every auto query pays for an embedding call and a BM25 pass over all chunks, and the fused score is a rank statistic rather than a similarity, so it cannot be compared across queries or used as a threshold.
+**Where:** `app/services/rag/service.py` (`RAGService.query()`, `query_hybrid()`); `app/services/rag/bm25.py` (`KeywordIndex`); `app/services/rag/fusion.py` (`reciprocal_rank_fuse()`); the eval harness in `evals/cli.py`.
+
+### 7. Background jobs in a thread pool, persisted as JSON
+
+**Decision:** `JobStore` runs work on a small ThreadPoolExecutor (two workers by default) and persists every job to a JSON file; on restart, any job still queued or running is marked failed with "Interrupted by application restart" rather than left spinning.
+**Why:** A local single-user app does not need Redis or Celery, and two workers matches reality: ComfyUI and AI-Toolkit both want the whole GPU at once.
+**Trade-off:** The file keeps only the most recent 200 jobs, and cancellation is cooperative, so a worker that never checks `is_cancelled()` runs to completion anyway.
+**Where:** `app/core/jobs.py` (`JobStore`, `_load()`, `_run()`, `cancel()`).
+
+### 8. ComfyUI workflows as API-format JSON plus a field map
+
+**Decision:** Each workflow is two files on disk: `workflows/<id>.json`, the raw ComfyUI API-format export, and `<id>.map.json`, which names the node id and field each logical input (prompt, seed, steps, cfg, ...) writes to; Python never hardcodes a node id.
+**Why:** A workflow can be swapped or extended by editing JSON without touching code, and the mapping keeps the UI controls in sync with whatever nodes the export contains.
+**Trade-off:** The map must be written by hand for each new workflow, and only the logical inputs the service knows about are editable through it; the rest of the graph is sent to ComfyUI untouched.
+**Where:** `app/services/comfyui_service.py` (workflow loading and input injection); `workflows/sdxl_txt2img.map.json`.
+
+### 9. Argument-list subprocesses and one traversal guard
+
+**Decision:** External processes are launched with fixed argument lists and no shell, and every path built from browser input goes through `safe_join` or `sanitize_filename`, which refuse absolute paths, drive letters, backslashes, and anything that resolves outside the data root.
+**Why:** A command line assembled by string concatenation is a shell-injection hole, and one guard at the boundary means no other code in the app may concatenate user strings onto directories.
+**Trade-off:** `safe_join` refuses backslash components on every platform, so Windows-style names cannot be used even where they would be harmless; uploads are limited to the extension sets the guards allow (images for generation, .safetensors for LoRA).
+**Where:** `app/core/paths.py` (`safe_join`, `sanitize_filename`, `validate_image_upload`); `app/services/lora_training_service.py` (training subprocess launch).
+
+### 10. An access token for the public tunnel
+
+**Decision:** When APOLLO_ACCESS_TOKEN is set, every request needs that token in the X-Apollo-Token header or a cookie, except /live and /health which stay open for probes; opening the link with ?token=... once sets an HttpOnly cookie for 30 days. Unset (a plain local run) leaves Apollo fully open.
+**Why:** launcher.py publishes Apollo through a public Cloudflare tunnel whose traffic reaches uvicorn from localhost, so "local" proves nothing and the token is the only gate between the dashboard and the internet.
+**Trade-off:** The cookie lives for 30 days on any machine that opens the link, and there are no per-user accounts or revocation: losing the token means regenerating it in .env.
+**Where:** `app/main.py` (`require_access_token`).
