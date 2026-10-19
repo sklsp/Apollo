@@ -11,6 +11,15 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Every service persists under settings.data_dir, and some are built at import time (before any fixture runs).
+# Point it at a throwaway folder first, so the suite never writes into the real data/ folder: that is how
+# data/sessions.json grew to 24 GB. Tests that need their own storage still use tmp_settings.
+import tempfile  # noqa: E402
+
+from app.core import config as _config  # noqa: E402
+
+object.__setattr__(_config.settings, "data_dir", tempfile.mkdtemp(prefix="apollo-test-data-"))
+
 # These files predate the test suite: they are standalone diagnostic scripts
 # that print at import time and, in several cases, require a live Ollama server.
 # They are kept (they are useful to run by hand: `python tests/test_endpoints.py`)
