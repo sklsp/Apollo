@@ -2,6 +2,7 @@
 """Probe local Ollama connectivity and available HTTP endpoints."""
 
 import socket
+from typing import Any
 
 import requests
 
@@ -20,7 +21,7 @@ endpoints = [
     "/completion",
 ]
 
-payload = {"model": "ggml-small", "prompt": "Hello diagnostics", "stream": False}
+payload: dict[str, Any] = {"model": "ggml-small", "prompt": "Hello diagnostics", "stream": False}
 
 
 def check_socket(hostname: str, port: int = 11434, timeout: float = 3.0):

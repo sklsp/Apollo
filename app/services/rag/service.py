@@ -2,8 +2,11 @@
 
 The vector index is persistent: chunks, vectors and index metadata live under
 ``DATA_DIR/rag/`` and are reloaded on startup, so a restart does not re-embed
-the knowledge base. Indexing is incremental — a document is only embedded when
+the knowledge base. Indexing is incremental - a document is only embedded when
 its content hash differs from the version already in the index.
+
+The BM25 keyword index used for hybrid retrieval is derived from stored chunk
+text and rebuilt in memory at startup, so it never needs persisting separately.
 """
 
 from __future__ import annotations
@@ -14,8 +17,10 @@ import time
 from typing import Any
 
 from app.core.config import settings
+from app.services.rag.bm25 import KeywordIndex, build_keyword_index
 from app.services.rag.chunking import chunk_text
 from app.services.rag.embeddings import EmbeddingClient
+from app.services.rag.fusion import reciprocal_rank_fuse
 from app.services.rag.vector_store import (
     IndexIncompatibleError,
     RetrievedChunk,
@@ -47,6 +52,8 @@ class RAGService:
         self._store: VectorStore | None = None
         # doc_id -> {"hash": ..., "chunks": N, "model": ..., "indexed_at": ...}
         self._doc_versions: dict[str, dict[str, Any]] = {}
+        # BM25 index over stored chunk text; rebuilt in memory at startup.
+        self._keyword_index: KeywordIndex | None = None
         self._load_store()
 
     # ---------- state ----------
@@ -54,6 +61,27 @@ class RAGService:
     @property
     def chunk_count(self) -> int:
         return self._store.size if self._store else 0
+
+    @property
+    def keyword_index(self) -> KeywordIndex | None:
+        """BM25 index over stored chunks; ``None`` until a vector store exists."""
+        return self._keyword_index
+
+    @property
+    def hybrid_mode(self) -> str:
+        """Retrieval mode from ``RAG_HYBRID``: auto, vector, or keyword.
+
+        Unknown values fall back to ``auto`` with a warning rather than
+        failing retrieval.
+        """
+        mode = settings.rag_hybrid.strip().lower()
+        if mode not in ("auto", "vector", "keyword"):
+            logger.warning(
+                "[RAG] Unknown RAG_HYBRID value %r; falling back to auto",
+                settings.rag_hybrid,
+            )
+            return "auto"
+        return mode
 
     def document_versions(self) -> dict[str, dict[str, Any]]:
         """Which version of each document is currently indexed."""
@@ -100,7 +128,7 @@ class RAGService:
         *,
         force: bool = False,
     ) -> int:
-        """Chunk, embed, and index a document — incrementally.
+        """Chunk, embed, and index a document - incrementally.
 
         When the same ``doc_id`` is already indexed with the identical content
         hash and embedding model, nothing is re-embedded and 0 is returned.
@@ -127,6 +155,9 @@ class RAGService:
             removed = self._store.remove_by_doc_id(doc_id)
             if removed:
                 logger.info("[RAG] %s changed; dropped %d stale chunks", doc_id, removed)
+        # Keep the keyword index in sync with whatever was just dropped.
+        if self._keyword_index is not None and self._store is not None:
+            self._keyword_index.remove_by_doc_id(doc_id)
 
         chunks = chunk_text(
             text,
@@ -153,6 +184,9 @@ class RAGService:
         ]
         assert self._store is not None
         self._store.add(embeddings, stored_chunks)
+        # Keep the keyword index in sync with the freshly indexed chunks.
+        if self._keyword_index is not None:
+            self._keyword_index.add_chunks(stored_chunks)
         self._record_version(doc_id, text, len(chunks))
         self._save()
         return len(chunks)
@@ -171,6 +205,7 @@ class RAGService:
             "index_chunks": self.chunk_count,
             "embedding_model": self.embedding_client.model,
             "backend": self.embedding_client.backend,
+            "retrieval_mode": self.hybrid_mode,
             "retrieved": [
                 {
                     "doc_id": chunk.doc_id,
@@ -185,13 +220,66 @@ class RAGService:
         }
 
     def query(self, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
-        """Retrieve the most relevant chunks for a question."""
+        """Retrieve the most relevant chunks for a question.
+
+        The retrieval mode follows ``RAG_HYBRID`` (see :attr:`hybrid_mode`):
+        ``auto`` fuses vector similarity with BM25 keyword ranking, while
+        ``vector`` and ``keyword`` use only that single signal.
+        """
+        k = top_k or settings.rag_top_k
+        mode = self.hybrid_mode
+        if mode == "vector":
+            return self.query_vector(question, k)
+        if mode == "keyword":
+            if self._keyword_index is None:
+                return []
+            return self._keyword_index.search(question, top_k=k)
+        return self.query_hybrid(question, top_k=k)
+
+    def query_vector(self, question: str, top_k: int) -> list[RetrievedChunk]:
+        """Pure vector leg of retrieval (no keyword fusion)."""
+        if not self._store or self._store.size == 0:
+            return []
+        query_embedding = self.embedding_client.embed(question)
+        return self._store.search(query_embedding, top_k=top_k)
+
+    def query_hybrid(self, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
+        """Retrieve chunks by fusing vector similarity with BM25 keyword ranking.
+
+        Both rankings are combined with reciprocal rank fusion (k=60), so a
+        chunk that ranks well in either signal surfaces even when the other
+        misses it entirely. Each returned chunk carries its fused RRF score
+        rather than a raw cosine or BM25 value, and results are sorted by that
+        score descending. Degrades to plain vector search when no keyword
+        index is available.
+        """
+        k = top_k or settings.rag_top_k
         if not self._store or self._store.size == 0:
             return []
 
-        k = top_k or settings.rag_top_k
-        query_embedding = self.embedding_client.embed(question)
-        return self._store.search(query_embedding, top_k=k)
+        vector_hits = self.query_vector(question, k)
+        keyword_hits = (
+            self._keyword_index.search(question, top_k=k)
+            if self._keyword_index is not None
+            else []
+        )
+        fused = reciprocal_rank_fuse(
+            [
+                [f"{chunk.doc_id}:{chunk.chunk_index}" for chunk in vector_hits],
+                [f"{chunk.doc_id}:{chunk.chunk_index}" for chunk in keyword_hits],
+            ],
+            top_k=k,
+        )
+        by_id = {
+            f"{chunk.doc_id}:{chunk.chunk_index}": chunk
+            for chunk in [*vector_hits, *keyword_hits]
+        }
+        results: list[RetrievedChunk] = []
+        for chunk_id, rrf_score in fused:
+            chunk = by_id[chunk_id]
+            chunk.score = rrf_score
+            results.append(chunk)
+        return results
 
     def format_context(self, chunks: list[RetrievedChunk]) -> str:
         """Format retrieved chunks for LLM prompt injection."""
@@ -212,6 +300,8 @@ class RAGService:
             return 0
         removed = self._store.remove_by_doc_id(doc_id)
         if removed:
+            if self._keyword_index is not None:
+                self._keyword_index.remove_by_doc_id(doc_id)
             self._doc_versions.pop(doc_id, None)
             self._save()
         return removed
@@ -220,6 +310,8 @@ class RAGService:
         """Clear the entire vector index."""
         if self._store:
             self._store.clear()
+        if self._keyword_index is not None:
+            self._keyword_index.clear()
         self._doc_versions.clear()
         self._save()
 
@@ -261,9 +353,13 @@ class RAGService:
         # incremental indexing works across restarts.
         self._rebuild_version_map()
 
+        # The keyword index is derived from stored chunk text, so rebuild it in
+        # full at startup instead of persisting a second copy (item 30).
+        self._keyword_index = build_keyword_index(self._store._chunks)
+
     def _quarantine_files(self) -> None:
-        from pathlib import Path
         import shutil
+        from pathlib import Path
 
         root = Path(self.persist_dir)
         quarantine = root / "quarantined"
@@ -314,6 +410,9 @@ class RAGService:
                 persist_dir=self.persist_dir,
                 embedding_model=self.embedding_client.model,
             )
+            # No persisted index to rebuild from; start empty and let the
+            # indexing path keep it in sync (item 33).
+            self._keyword_index = KeywordIndex()
         elif self._store.dimension != dimension:
             raise ValueError(
                 "Embedding dimension changed; clear the RAG index before re-indexing "

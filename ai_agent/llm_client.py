@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 try:
     import requests
 except ImportError:  # pragma: no cover - exercised in minimal environments
-    requests = None
+    requests = None  # type: ignore[assignment]
 
 from .config import OLLAMA_BASE_URL
 
@@ -16,7 +16,7 @@ def _format_url(base_url: str, endpoint: str) -> str:
     return f"{base_url.rstrip('/')}{endpoint}"
 
 
-def _build_payload(prompt: str, model: str) -> Dict[str, Any]:
+def _build_payload(prompt: str, model: str) -> dict[str, Any]:
     return {
         "model": model,
         "prompt": prompt,

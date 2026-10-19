@@ -1,0 +1,747 @@
+{
+  "schema_version": 1,
+  "config": {
+    "mode": "service",
+    "retrieval_mode": "vector",
+    "embedding_backend": "sentence-transformers",
+    "embedder_model": "all-MiniLM-L6-v2",
+    "top_k": 4,
+    "num_docs": 12,
+    "num_chunks": 46,
+    "chunk_size": 800,
+    "overlap": 150
+  },
+  "summary": {
+    "num_questions": 48,
+    "k": 4,
+    "mean_recall_at_k": 0.9896,
+    "mrr": 0.9757,
+    "hit_rate_at_k": 1.0
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "retrieved_doc_ids": [
+        "diffusion-basics",
+        "diffusion-basics",
+        "diffusion-basics",
+        "upscaling-and-resolution"
+      ],
+      "relevant_doc_ids": [
+        "diffusion-basics"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q02",
+      "retrieved_doc_ids": [
+        "diffusion-basics",
+        "comfyui-workflows",
+        "comfyui-workflows",
+        "upscaling-and-resolution"
+      ],
+      "relevant_doc_ids": [
+        "diffusion-basics"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q03",
+      "retrieved_doc_ids": [
+        "diffusion-basics",
+        "sampling-and-cfg",
+        "diffusion-basics",
+        "sampling-and-cfg"
+      ],
+      "relevant_doc_ids": [
+        "diffusion-basics"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q04",
+      "retrieved_doc_ids": [
+        "diffusion-basics",
+        "diffusion-basics",
+        "sdxl",
+        "diffusion-basics"
+      ],
+      "relevant_doc_ids": [
+        "diffusion-basics"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q05",
+      "retrieved_doc_ids": [
+        "diffusion-basics",
+        "diffusion-basics",
+        "diffusion-basics",
+        "sdxl"
+      ],
+      "relevant_doc_ids": [
+        "diffusion-basics"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q06",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "sdxl",
+        "sdxl",
+        "sdxl"
+      ],
+      "relevant_doc_ids": [
+        "sdxl"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q07",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "sdxl",
+        "sdxl",
+        "sampling-and-cfg"
+      ],
+      "relevant_doc_ids": [
+        "sdxl"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q08",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "sdxl",
+        "sdxl",
+        "sdxl"
+      ],
+      "relevant_doc_ids": [
+        "sdxl"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q09",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "sdxl",
+        "sdxl",
+        "prompt-engineering"
+      ],
+      "relevant_doc_ids": [
+        "sdxl"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q10",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "sdxl",
+        "sdxl",
+        "sampling-and-cfg"
+      ],
+      "relevant_doc_ids": [
+        "sdxl"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q11",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "sampling-and-cfg",
+        "sdxl",
+        "sdxl"
+      ],
+      "relevant_doc_ids": [
+        "sdxl"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q12",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "sdxl",
+        "lora-concepts",
+        "training-failure-modes"
+      ],
+      "relevant_doc_ids": [
+        "sdxl"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q13",
+      "retrieved_doc_ids": [
+        "prompt-engineering",
+        "prompt-engineering",
+        "prompt-engineering",
+        "lora-dataset-curation"
+      ],
+      "relevant_doc_ids": [
+        "prompt-engineering"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q14",
+      "retrieved_doc_ids": [
+        "prompt-engineering",
+        "prompt-engineering",
+        "prompt-engineering",
+        "prompt-engineering"
+      ],
+      "relevant_doc_ids": [
+        "prompt-engineering"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q15",
+      "retrieved_doc_ids": [
+        "prompt-engineering",
+        "prompt-engineering",
+        "prompt-engineering",
+        "lora-concepts"
+      ],
+      "relevant_doc_ids": [
+        "prompt-engineering"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q16",
+      "retrieved_doc_ids": [
+        "prompt-engineering",
+        "prompt-engineering",
+        "prompt-engineering",
+        "prompt-engineering"
+      ],
+      "relevant_doc_ids": [
+        "prompt-engineering"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q17",
+      "retrieved_doc_ids": [
+        "prompt-engineering",
+        "prompt-engineering",
+        "lora-dataset-curation",
+        "sdxl"
+      ],
+      "relevant_doc_ids": [
+        "prompt-engineering"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q18",
+      "retrieved_doc_ids": [
+        "prompt-engineering",
+        "prompt-engineering",
+        "prompt-engineering",
+        "prompt-engineering"
+      ],
+      "relevant_doc_ids": [
+        "prompt-engineering"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q19",
+      "retrieved_doc_ids": [
+        "sampling-and-cfg",
+        "sampling-and-cfg",
+        "upscaling-and-resolution",
+        "comfyui-workflows"
+      ],
+      "relevant_doc_ids": [
+        "sampling-and-cfg"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q20",
+      "retrieved_doc_ids": [
+        "sampling-and-cfg",
+        "sampling-and-cfg",
+        "comfyui-workflows",
+        "sampling-and-cfg"
+      ],
+      "relevant_doc_ids": [
+        "sampling-and-cfg"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q21",
+      "retrieved_doc_ids": [
+        "sampling-and-cfg",
+        "sampling-and-cfg",
+        "sdxl",
+        "sdxl"
+      ],
+      "relevant_doc_ids": [
+        "sampling-and-cfg"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q22",
+      "retrieved_doc_ids": [
+        "sampling-and-cfg",
+        "sampling-and-cfg",
+        "comfyui-workflows",
+        "comfyui-workflows"
+      ],
+      "relevant_doc_ids": [
+        "sampling-and-cfg"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q23",
+      "retrieved_doc_ids": [
+        "sampling-and-cfg",
+        "sampling-and-cfg",
+        "comfyui-workflows",
+        "comfyui-workflows"
+      ],
+      "relevant_doc_ids": [
+        "sampling-and-cfg"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q24",
+      "retrieved_doc_ids": [
+        "sampling-and-cfg",
+        "diffusion-basics",
+        "sampling-and-cfg",
+        "sampling-and-cfg"
+      ],
+      "relevant_doc_ids": [
+        "sampling-and-cfg"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q25",
+      "retrieved_doc_ids": [
+        "lora-concepts",
+        "lora-concepts",
+        "lora-dataset-curation",
+        "training-failure-modes"
+      ],
+      "relevant_doc_ids": [
+        "lora-concepts"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q26",
+      "retrieved_doc_ids": [
+        "lora-concepts",
+        "lora-concepts",
+        "lora-dataset-curation",
+        "training-failure-modes"
+      ],
+      "relevant_doc_ids": [
+        "lora-concepts"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q27",
+      "retrieved_doc_ids": [
+        "lora-concepts",
+        "training-failure-modes",
+        "lora-concepts",
+        "lora-concepts"
+      ],
+      "relevant_doc_ids": [
+        "lora-concepts"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q28",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "lora-concepts",
+        "sdxl",
+        "sdxl"
+      ],
+      "relevant_doc_ids": [
+        "lora-concepts"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 0.5,
+      "hit_at_k": true
+    },
+    {
+      "id": "q29",
+      "retrieved_doc_ids": [
+        "lora-dataset-curation",
+        "apollo-lora-pipeline",
+        "lora-concepts",
+        "training-failure-modes"
+      ],
+      "relevant_doc_ids": [
+        "lora-dataset-curation"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q30",
+      "retrieved_doc_ids": [
+        "lora-dataset-curation",
+        "lora-concepts",
+        "lora-concepts",
+        "training-failure-modes"
+      ],
+      "relevant_doc_ids": [
+        "lora-dataset-curation"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q31",
+      "retrieved_doc_ids": [
+        "apollo-lora-pipeline",
+        "apollo-lora-pipeline",
+        "lora-dataset-curation",
+        "lora-dataset-curation"
+      ],
+      "relevant_doc_ids": [
+        "lora-dataset-curation"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 0.3333,
+      "hit_at_k": true
+    },
+    {
+      "id": "q32",
+      "retrieved_doc_ids": [
+        "lora-dataset-curation",
+        "apollo-lora-pipeline",
+        "training-failure-modes",
+        "lora-concepts"
+      ],
+      "relevant_doc_ids": [
+        "lora-dataset-curation"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q33",
+      "retrieved_doc_ids": [
+        "comfyui-workflows",
+        "comfyui-workflows",
+        "comfyui-workflows",
+        "sdxl"
+      ],
+      "relevant_doc_ids": [
+        "comfyui-workflows"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q34",
+      "retrieved_doc_ids": [
+        "comfyui-workflows",
+        "comfyui-workflows",
+        "comfyui-workflows",
+        "sampling-and-cfg"
+      ],
+      "relevant_doc_ids": [
+        "comfyui-workflows"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q35",
+      "retrieved_doc_ids": [
+        "comfyui-workflows",
+        "comfyui-workflows",
+        "apollo-lora-pipeline",
+        "comfyui-workflows"
+      ],
+      "relevant_doc_ids": [
+        "comfyui-workflows"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q36",
+      "retrieved_doc_ids": [
+        "comfyui-workflows",
+        "apollo-lora-pipeline",
+        "apollo-lora-pipeline",
+        "apollo-rag-knowledge-base"
+      ],
+      "relevant_doc_ids": [
+        "comfyui-workflows"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q37",
+      "retrieved_doc_ids": [
+        "apollo-rag-knowledge-base",
+        "apollo-lora-pipeline",
+        "apollo-lora-pipeline",
+        "comfyui-workflows"
+      ],
+      "relevant_doc_ids": [
+        "apollo-rag-knowledge-base"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q38",
+      "retrieved_doc_ids": [
+        "apollo-rag-knowledge-base",
+        "apollo-rag-knowledge-base",
+        "apollo-rag-knowledge-base",
+        "comfyui-workflows"
+      ],
+      "relevant_doc_ids": [
+        "apollo-rag-knowledge-base"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q39",
+      "retrieved_doc_ids": [
+        "apollo-rag-knowledge-base",
+        "vector-search-basics",
+        "comfyui-workflows",
+        "apollo-rag-knowledge-base"
+      ],
+      "relevant_doc_ids": [
+        "apollo-rag-knowledge-base"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q40",
+      "retrieved_doc_ids": [
+        "apollo-rag-knowledge-base",
+        "apollo-lora-pipeline",
+        "apollo-lora-pipeline",
+        "apollo-rag-knowledge-base"
+      ],
+      "relevant_doc_ids": [
+        "apollo-rag-knowledge-base"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q41",
+      "retrieved_doc_ids": [
+        "apollo-lora-pipeline",
+        "lora-dataset-curation",
+        "apollo-lora-pipeline",
+        "training-failure-modes"
+      ],
+      "relevant_doc_ids": [
+        "apollo-lora-pipeline"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q42",
+      "retrieved_doc_ids": [
+        "apollo-lora-pipeline",
+        "apollo-lora-pipeline",
+        "apollo-lora-pipeline",
+        "lora-dataset-curation"
+      ],
+      "relevant_doc_ids": [
+        "apollo-lora-pipeline"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q43",
+      "retrieved_doc_ids": [
+        "upscaling-and-resolution",
+        "upscaling-and-resolution",
+        "upscaling-and-resolution",
+        "sampling-and-cfg"
+      ],
+      "relevant_doc_ids": [
+        "upscaling-and-resolution"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q44",
+      "retrieved_doc_ids": [
+        "apollo-rag-knowledge-base",
+        "vector-search-basics",
+        "apollo-lora-pipeline",
+        "apollo-rag-knowledge-base"
+      ],
+      "relevant_doc_ids": [
+        "vector-search-basics",
+        "apollo-rag-knowledge-base"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q45",
+      "retrieved_doc_ids": [
+        "training-failure-modes",
+        "training-failure-modes",
+        "lora-dataset-curation",
+        "lora-concepts"
+      ],
+      "relevant_doc_ids": [
+        "training-failure-modes"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q46",
+      "retrieved_doc_ids": [
+        "training-failure-modes",
+        "lora-concepts",
+        "lora-concepts",
+        "training-failure-modes"
+      ],
+      "relevant_doc_ids": [
+        "training-failure-modes",
+        "lora-dataset-curation"
+      ],
+      "recall_at_k": 0.5,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q47",
+      "retrieved_doc_ids": [
+        "lora-concepts",
+        "apollo-lora-pipeline",
+        "apollo-lora-pipeline",
+        "lora-concepts"
+      ],
+      "relevant_doc_ids": [
+        "lora-concepts",
+        "apollo-lora-pipeline"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    },
+    {
+      "id": "q48",
+      "retrieved_doc_ids": [
+        "sdxl",
+        "sdxl",
+        "upscaling-and-resolution",
+        "upscaling-and-resolution"
+      ],
+      "relevant_doc_ids": [
+        "sdxl",
+        "upscaling-and-resolution"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "hit_at_k": true
+    }
+  ]
+}

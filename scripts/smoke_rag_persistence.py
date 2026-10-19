@@ -6,7 +6,6 @@ Run twice:
 """
 import json
 import sys
-import time
 import urllib.request
 
 BASE = "http://127.0.0.1:8765"
@@ -47,7 +46,7 @@ def phase2() -> None:
     entry = next(
         (d for d in status["indexed_documents"] if d["doc_id"] == "doc_0"), None)
     print("restored doc record:", entry)
-    print("PHASE2 OK — persistent index verified")
+    print("PHASE2 OK - persistent index verified")
 
 
 if __name__ == "__main__":

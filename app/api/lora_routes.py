@@ -122,7 +122,6 @@ def hardware_info(
 ) -> dict:
     """What this machine can run: GPU, VRAM, RAM, disk."""
     from app.core.config import settings as app_settings
-
     from app.services.hardware import detect_hardware
 
     return detect_hardware(
@@ -372,8 +371,8 @@ def generate_captions(
 @router.post("/projects/{project_id}/caption-jobs", response_model=JobResponse)
 def start_caption_job(
     project_id: str,
+    request: Request,
     payload: CaptionGenerateRequest | None = None,
-    request: Request = None,
     service: LoRAProjectService = Depends(get_project_service),
 ) -> JobResponse:
     """Queue dataset captioning as a background job (for large datasets).

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import importlib.util
 import socket
-import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -92,7 +91,7 @@ class TestWaitForBackend:
         return original
 
     def test_api_up_with_unhealthy_dependencies_still_starts(self, launcher, free_port):
-        """/health returning 503 must NOT fail startup — that's the core bug."""
+        """/health returning 503 must NOT fail startup - that's the core bug."""
         original = self._patch_port(launcher, free_port)
         server = _serve(_Handler, port=free_port)  # live=200, health=503
         try:

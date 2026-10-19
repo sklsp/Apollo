@@ -16,7 +16,7 @@ import pytest
 import yaml
 
 from app.core.exceptions import AIToolkitError, LoRAProjectError, OllamaServiceError
-from app.services.lora_dataset_service import LoRAProjectService, _clean_caption
+from app.services.lora_dataset_service import _clean_caption
 from app.services.lora_training_service import (
     AIToolkitProcess,
     LoRATrainingService,
@@ -445,6 +445,29 @@ class TestProcessManagement:
         trainer = AIToolkitProcess(tmp_path / "cfg.yml", tmp_path / "train.log")
         with pytest.raises(AIToolkitError, match="not configured"):
             trainer.start()
+
+    def test_start_training_records_a_run_in_history(
+        self, project_service, project, tmp_path, set_setting
+    ):
+        """Regression for an F821 bug: run-history recording referenced an
+        undefined ``config`` (NameError) that the broad except swallowed, so
+        runs were silently never recorded."""
+        write_fake_trainer(tmp_path, "print('done')\n")
+        set_setting("ai_toolkit_path", str(tmp_path))
+        set_setting("ai_toolkit_python", sys.executable)
+
+        project_service.add_image(project.id, "a.png", png_bytes())
+        project_service.set_caption(project.id, "a", "p3r5on, portrait")
+
+        service = LoRATrainingService(projects=project_service)
+        job = service.start_training(project.id, {})
+
+        runs = service.history.list_runs(project.id)
+        assert len(runs) == 1
+        assert runs[0]["job_id"] == job.id
+        # The recorded config is the one actually written to disk.
+        assert runs[0]["config"]["train"]["steps"] > 0
+        assert runs[0]["base_model"].startswith("stabilityai/")
 
 
 # ============================================

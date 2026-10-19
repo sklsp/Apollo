@@ -24,7 +24,7 @@ import yaml
 
 from app.core.config import settings
 from app.core.exceptions import AIToolkitError, LoRAProjectError
-from app.core.jobs import Job, JobStatus, JobStore
+from app.core.jobs import Job, JobStore
 from app.core.paths import is_safetensors, safe_join
 from app.services.lora_dataset_service import LoRAProjectService
 from app.services.run_history import RunHistory
@@ -38,7 +38,7 @@ _STEP_PATTERNS = (
 )
 _LOSS_PATTERN = re.compile(r"loss[=:\s]+([0-9]*\.?[0-9]+)", re.I)
 
-# Sensible per-architecture defaults. Only what is actually needed today —
+# Sensible per-architecture defaults. Only what is actually needed today -
 # new architectures get an entry here rather than branches sprinkled elsewhere.
 ARCH_DEFAULTS: dict[str, dict[str, Any]] = {
     "sdxl": {
@@ -494,7 +494,7 @@ class LoRATrainingService:
         from app.services.hardware import detect_hardware
         from app.services.training_preflight import advise
 
-        # Dataset checks first — they are cheap and independent of hardware.
+        # Dataset checks first - they are cheap and independent of hardware.
         checks: list[dict[str, Any]] = []
         try:
             images = self.projects.list_images(project_id)
@@ -605,11 +605,14 @@ class LoRATrainingService:
 
         # Record the run with full provenance before anything can fail.
         try:
-            from app.services.hardware import HardwareInfo, detect_hardware
+            from app.services.hardware import detect_hardware
             from app.services.training_preflight import advise
 
             images = self.projects.list_images(project_id)
             project = self.projects.get_project(project_id)
+            # Read back what was actually written, so the recorded run matches
+            # the config file on disk (there is no local ``config`` here).
+            config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
             process_config = config["config"]["process"][0]
             hardware_info = detect_hardware(comfyui_base_url=settings.comfyui_base_url)
             hardware = hardware_info.to_dict()

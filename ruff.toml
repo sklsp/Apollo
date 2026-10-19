@@ -1,0 +1,15 @@
+line-length = 100
+target-version = "py312"
+extend-exclude = [
+    "tests/debug_chat_route.py",
+    "tests/test_chat_error.py",
+    "tests/test_endpoints.py",
+    "tests/test_ollama_detailed.py",
+    "tests/test_ollama_endpoints.py",
+    "tests/test_routes_debug.py",
+    "tests/test_routes_detailed.py",
+]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501", "B008", "UP042"]

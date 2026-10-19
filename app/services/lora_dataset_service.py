@@ -16,7 +16,7 @@ import logging
 import re
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -43,7 +43,7 @@ CAPTION_PROMPT = (
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 @dataclass
@@ -121,13 +121,14 @@ class LoRAProjectService:
         slug = re.sub(r"[^a-z0-9_-]", "_", name.strip().lower()).strip("_")[:40] or "lora"
         project_id = f"{slug}_{uuid.uuid4().hex[:6]}"
 
+        overrides: dict[str, Any] = {"base_model": base_model} if base_model else {}
         project = LoRAProject(
             id=project_id,
             name=name.strip(),
             description=description,
             arch=arch,
             trigger_word=trigger_word.strip(),
-            **({"base_model": base_model} if base_model else {}),
+            **overrides,
         )
 
         root = safe_join(self.data_dir, project_id)
@@ -365,7 +366,7 @@ class LoRAProjectService:
             if project.trigger_word and project.trigger_word.lower() not in caption.lower():
                 caption = f"{project.trigger_word}, {caption}"
 
-            # Saved but NOT marked edited — the user still reviews and confirms.
+            # Saved but NOT marked edited - the user still reviews and confirms.
             self._write_caption_unmarked(project_id, image.id, caption)
             results.append({"image_id": image.id, "caption": caption, "skipped": False})
 
@@ -499,7 +500,7 @@ def _library_entry(
         "training_status": project.training_status if project else "external",
         "size_bytes": path.stat().st_size,
         "created_at": datetime.fromtimestamp(
-            path.stat().st_mtime, tz=timezone.utc
+            path.stat().st_mtime, tz=UTC
         ).isoformat(),
     }
 

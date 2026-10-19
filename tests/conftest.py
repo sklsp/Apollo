@@ -11,6 +11,15 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Every service persists under settings.data_dir, and some are built at import time (before any fixture runs).
+# Point it at a throwaway folder first, so the suite never writes into the real data/ folder: that is how
+# data/sessions.json grew to 24 GB. Tests that need their own storage still use tmp_settings.
+import tempfile  # noqa: E402
+
+from app.core import config as _config  # noqa: E402
+
+object.__setattr__(_config.settings, "data_dir", tempfile.mkdtemp(prefix="apollo-test-data-"))
+
 # These files predate the test suite: they are standalone diagnostic scripts
 # that print at import time and, in several cases, require a live Ollama server.
 # They are kept (they are useful to run by hand: `python tests/test_endpoints.py`)
@@ -24,6 +33,81 @@ collect_ignore = [
     "test_routes_debug.py",
     "test_routes_detailed.py",
 ]
+
+
+def _install_shared_embedding_model() -> None:
+    """Make repeated sentence-transformers loads share one model instance.
+
+    ``EmbeddingClient`` falls back to ``SentenceTransformer("all-MiniLM-L6-v2")``
+    once per instance (app/services/rag/embeddings.py), and sentence-transformers
+    6.x keeps no class-level cache, so every RAGService construction re-reads the
+    model from disk (~3-6 s each; ~14 s cold including the torch import). The
+    tests never assert on vector values or on how often a model is loaded - only
+    that an embedding backend exists and works - so sharing one real instance
+    preserves behaviour while removing the suite's dominant cost. Ollama itself
+    stays genuinely unreachable: every client still attempts (and fails) its HTTP
+    probe before falling back.
+    """
+    try:
+        import sentence_transformers as st
+    except ImportError:  # pragma: no cover - ST is required for the fallback path
+        return
+
+    cls = st.SentenceTransformer
+    if getattr(cls, "_apollo_shared_model", False):
+        return
+
+    original_init = cls.__init__
+    shared: dict[str, object] = {}
+
+    def cached_init(self, model_name_or_path=None, *args, **kwargs) -> None:
+        key = (
+            model_name_or_path
+            if isinstance(model_name_or_path, str) and not args and not kwargs
+            else None
+        )
+        if key is not None and key in shared:
+            self.__dict__.update(shared[key].__dict__)
+            return
+        original_init(self, model_name_or_path, *args, **kwargs)
+        if key is not None:
+            shared[key] = self
+
+    cls._apollo_shared_model = True  # type: ignore[attr-defined]
+    cls.__init__ = cached_init  # type: ignore[method-assign]
+
+
+_install_shared_embedding_model()
+
+
+@pytest.fixture(autouse=True)
+def fast_external_timeouts():
+    """Fail fast against the absent Ollama/ComfyUI during tests.
+
+    On this machine a connect to a closed localhost port is refused only after
+    ~2-4 s (delayed RST), so every real-client probe in the suite pays that delay
+    on top of its work. The tests assert on outcomes - unreachable services
+    surface as errors, 503s or fallbacks - not on how long an attempt took, and
+    none of them read these settings directly (the one test that needs specific
+    values sets them itself via ``set_setting``). Originals are restored after
+    each test.
+    """
+    from app.core import config
+
+    overrides = {
+        "request_timeout": 0.2,
+        "vision_timeout": 0.2,
+        "comfyui_timeout": 0.2,
+        "comfyui_generation_timeout": 0.5,
+        "comfyui_poll_interval": 0.05,
+    }
+    originals = {name: getattr(config.settings, name) for name in overrides}
+
+    for name, value in overrides.items():
+        object.__setattr__(config.settings, name, value)
+    yield
+    for name, value in originals.items():
+        object.__setattr__(config.settings, name, value)
 
 
 @pytest.fixture
@@ -74,6 +158,35 @@ def set_setting(tmp_settings):
 
     for name, value in changed.items():
         object.__setattr__(config.settings, name, value)
+
+
+@pytest.fixture
+def synthetic_dataset(tmp_path):
+    """Two documents - one single-chunk, one multi-chunk - plus a question.
+
+    Shared by the eval index/runner tests so they exercise identical content;
+    see ``tests/fakes.py`` for the matching deterministic embedder.
+    """
+    import json
+
+    from evals.dataset import load_dataset
+
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    short = (
+        "# Alpha\nAlpha covers one narrow topic in a single short paragraph. "
+        "It stays well under the chunk size.\n"
+    )
+    long_text = " ".join(
+        f"Beta sentence number {i} adds detail to the beta document." for i in range(1, 25)
+    )
+    (corpus / "alpha.md").write_text(short, encoding="utf-8")
+    (corpus / "beta.md").write_text("# Beta\n" + long_text, encoding="utf-8")
+
+    questions = tmp_path / "questions.json"
+    entry = {"id": "q01", "question": "What does Alpha cover?", "source_docs": ["alpha"], "key_facts": ["f"]}
+    questions.write_text(json.dumps([entry]), encoding="utf-8")
+    return load_dataset(corpus_dir=corpus, questions_file=questions)
 
 
 @pytest.fixture

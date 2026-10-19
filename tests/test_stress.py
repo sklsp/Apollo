@@ -1,7 +1,7 @@
 """Stress test: 120-image dataset validation + large document indexing.
 
 Measures wall time and peak behavior; prints a summary. Not part of the
-default suite (marked slow) — run explicitly with:
+default suite (marked slow) - run explicitly with:
 
     pytest tests/test_stress.py -m slow -v
 """
@@ -9,10 +9,7 @@ default suite (marked slow) — run explicitly with:
 from __future__ import annotations
 
 import io
-import json
-import random
 import time
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -35,7 +32,6 @@ class TestLargeDataset:
     def test_120_image_dataset_validation_under_30s(self, project_service, project):
         from app.services.dataset_validation import validate_dataset
 
-        rng = random.Random(42)
         images_meta = []
         store: dict[str, bytes] = {}
 
@@ -90,8 +86,8 @@ class TestLargeDataset:
 
 class TestLargeDocument:
     def test_large_document_chunk_index_persist_retrieve(self, tmp_path):
-        from tests.test_production_hardening import FakeEmbeddingClient
         from app.services.rag.service import RAGService
+        from tests.test_production_hardening import FakeEmbeddingClient
 
         # ~200 KB of text -> roughly 250+ chunks at default settings.
         paragraph = (

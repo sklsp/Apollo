@@ -176,6 +176,14 @@ or process adapter. Nothing in the document pipeline imports ComfyUI code.
 
 ---
 
+## Engineering
+
+- **Tested:** the suite runs without Ollama or ComfyUI (425 tests). CI runs lint (ruff), a type check (mypy), the tests with coverage reporting, a retrieval regression gate and a Docker build.
+- **Measured:** retrieval is scored on 48 questions: MiniLM hit@4 1.0000, MRR 0.9757. See [docs/EVAL.md](docs/EVAL.md).
+- **Documented:** [architecture](docs/ARCHITECTURE.md) and [design decisions and trade-offs](docs/DESIGN.md).
+
+---
+
 ## Setup
 
 ### Prerequisites
@@ -235,6 +243,14 @@ Run uvicorn directly without the variable and Apollo stays open, as a local tool
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
+**Docker:**
+
+```bash
+docker compose up --build
+```
+
+The image is CPU-only. Ollama keeps running on the host; the container reaches it at `host.docker.internal`.
+
 **Interactive CLI (legacy agent):**
 
 ```bash
@@ -258,6 +274,7 @@ python main.py --api
 | `RAG_CHUNK_SIZE` | `800` | Characters per chunk |
 | `RAG_CHUNK_OVERLAP` | `150` | Overlap between chunks |
 | `RAG_TOP_K` | `4` | Retrieved chunks per query |
+| `RAG_HYBRID` | `auto` | Retrieval mode; auto fuses BM25 and vector with reciprocal rank fusion (also accepts vector or keyword) |
 | `OLLAMA_VISION_MODEL` | `llava` | Vision model for AI dataset captions |
 | `COMFYUI_BASE_URL` | `http://127.0.0.1:8188` | Local ComfyUI instance |
 | `COMFYUI_WORKFLOW_DIR` | `./workflows` | Where workflow JSON + mappings are stored |
@@ -474,7 +491,7 @@ Apollo/
 │   ├── smoke_preflight.py        # Live training-preflight demo
 │   └── smoke_rag_persistence.py  # Restart-survival verification for the index
 ├── workflows/                    # ComfyUI workflows + node-input mappings
-├── tests/                        # Test suite (261 tests) + legacy debug scripts
+├── tests/                        # Test suite (425 tests) + legacy debug scripts
 ├── data/                         # Documents, sessions, jobs, LoRA projects, generated images, rag index
 ├── images/                       # Feature demo GIFs (README showcase)
 ├── launcher.py                   # One-command startup (API + tunnel)
@@ -648,7 +665,7 @@ Local-first does not mean unguarded:
 - Documents, sessions, jobs, LoRA projects, workflows and generated images all persist on disk
 - Upload debug logs appear in the server console: `[UPLOAD] filename`, `extracted chars`, `rag chunks indexed`
 - Utility scripts: `python scripts/verify_system.py`, `python scripts/diagnostics_ollama.py`
-- Run the tests with `python -m pytest` (261 tests); stress tests: `pytest tests/test_stress.py -m slow`
+- Run the tests with `python -m pytest` (425 tests); stress tests: `pytest tests/test_stress.py -m slow`
 - Log prefixes: `[COMFYUI]`, `[COMFYUI JOB]`, `[LORA]`, `[LORA TRAINING]`, `[DATASET]`, `[RAG]`, `[RUN HISTORY]`
 - `tests/` also contains standalone diagnostic scripts (`test_endpoints.py`,
   `test_ollama_detailed.py`, …) that predate the suite. They print at import time

@@ -1,13 +1,13 @@
 """Dataset quality control: validation, duplicate detection, quality score.
 
-Runs entirely on bytes already on disk — no network calls — so it is safe to
+Runs entirely on bytes already on disk - no network calls - so it is safe to
 run from a background job or synchronously for small datasets.
 
 Checks performed per image:
 
 * decodable by Pillow (catches truncated / corrupted files)
 * extreme resolutions (too small to train on, or absurdly large)
-* inconsistent dimensions (informational — AI Toolkit buckets resolutions)
+* inconsistent dimensions (informational - AI Toolkit buckets resolutions)
 * exact duplicates (SHA-256 of decoded pixels, so a re-encoded copy matches)
 * near-duplicates (multi-signal, see below)
 * missing / empty / suspicious captions
@@ -16,10 +16,10 @@ Near-duplicate classification uses several signals combined, because a single
 perceptual hash produces false positives on solid-color images and other
 low-entropy content:
 
-* **exact**       — identical decoded pixels (SHA-256)
-* **high**        — small perceptual distance AND similar dimensions AND
+* **exact**       - identical decoded pixels (SHA-256)
+* **high**        - small perceptual distance AND similar dimensions AND
                     (for low-entropy images) matching color statistics
-* **possible**    — small perceptual distance but differing structure
+* **possible**    - small perceptual distance but differing structure
 
 The classifier returns ``exact_duplicate``, ``near_duplicate_high``,
 ``near_duplicate_possible`` or nothing (unique). Solid-color and other flat
@@ -167,14 +167,14 @@ def _mean_color(image: Any) -> tuple[float, float, float]:
 
 
 def _color_distance(a: tuple[float, float, float], b: tuple[float, float, float]) -> float:
-    return max(abs(x - y) for x, y in zip(a, b))
+    return max(abs(x - y) for x, y in zip(a, b, strict=True))
 
 
 def _is_low_entropy(hash_hex: str) -> bool:
     """True when an aHash is nearly all-0 or all-1 (flat/gradient images).
 
     Such hashes carry no structure, so hash similarity alone is meaningless
-    for them — two unrelated solid-color photos would "match".
+    for them - two unrelated solid-color photos would "match".
     """
     bits = int(hash_hex, 16)
     ones = bin(bits).count("1")
@@ -202,100 +202,15 @@ def classify_pair(
 
     Returns one of:
 
-    * ``"near_duplicate_high"``      — hash distance <= NEAR_HASH_CLOSE with
+    * ``"near_duplicate_high"``      - hash distance <= NEAR_HASH_CLOSE with
       corroborating signals (same aspect ratio; flat images also need the
       same mean color)
-    * ``"near_duplicate_possible"``  — hash-similar but signals disagree
+    * ``"near_duplicate_possible"``  - hash-similar but signals disagree
       (e.g. a crop or a reframe); surfaced for human review, never auto-merged
     * ``"unique"``
 
     Pixel-identical copies are caught earlier by SHA-256 and reported as
     plain ``duplicate``.
-    """
-    distance = _hamming(hash_a, hash_b)
-
-    if distance == 0:
-        # Identical structure. For flat images the hash is trivially equal for
-        # any same-brightness pair, so require the mean color to agree too.
-        if _is_low_entropy(hash_a) and color_a is not None and color_b is not None:
-            if _color_distance(color_a, color_b) > FLAT_COLOR_DISTANCE:
-                return "unique"
-        return "near_duplicate_high"
-
-    if distance > NEAR_HASH_CLOSE:
-        return "unique"
-
-    # Hash says "close". Corroborate with structure signals when available.
-    corroboration = 0
-    required = 0
-
-    if dims_a and dims_b:
-        required += 1
-        if _same_aspect_ratio(*dims_a, *dims_b):
-            corroboration += 1
-
-    if _is_low_entropy(hash_a) or _is_low_entropy(hash_b):
-        # Flat images: hash distance is noise, color must match.
-        if color_a is not None and color_b is not None:
-            required += 1
-            if _color_distance(color_a, color_b) <= FLAT_COLOR_DISTANCE:
-                corroboration += 1
-
-    if required and corroboration < required:
-        return "near_duplicate_possible"
-    return "near_duplicate_high"
-
-
-def _mean_color(image: Any) -> tuple[float, float, float]:
-    """Average RGB color, used to corroborate matches on flat images."""
-    small = image.convert("RGB").resize((1, 1))
-    return small.getpixel((0, 0))
-
-
-def _color_distance(a: tuple[float, float, float], b: tuple[float, float, float]) -> float:
-    return max(abs(x - y) for x, y in zip(a, b))
-
-
-def _is_low_entropy(hash_hex: str) -> bool:
-    """True when an aHash is nearly all-0 or all-1 (flat/gradient images).
-
-    Such hashes carry no structure, so hash similarity alone is meaningless
-    for them — two unrelated solid-color photos would "match".
-    """
-    bits = int(hash_hex, 16)
-    ones = bin(bits).count("1")
-    return ones <= LOW_ENTROPY_BITS or ones >= 64 - LOW_ENTROPY_BITS
-
-
-def _same_aspect_ratio(w_a: int, h_a: int, w_b: int, h_b: int) -> bool:
-    ratio_a = w_a / max(h_a, 1)
-    ratio_b = w_b / max(h_b, 1)
-    if ratio_a == 0 or ratio_b == 0:
-        return False
-    return abs(ratio_a - ratio_b) / max(ratio_a, ratio_b) <= ASPECT_RATIO_TOLERANCE
-
-
-def classify_pair(
-    hash_a: str,
-    hash_b: str,
-    *,
-    dims_a: tuple[int, int] | None = None,
-    dims_b: tuple[int, int] | None = None,
-    color_a: tuple[float, float, float] | None = None,
-    color_b: tuple[float, float, float] | None = None,
-) -> str:
-    """Classify how similar two images are, using every available signal.
-
-    Returns one of:
-
-    * ``"exact_duplicate"``          — identical perceptual hash AND identical
-      mean color (pixel-identical copies are caught earlier by SHA-256)
-    * ``"near_duplicate_high"``      — hash distance <= NEAR_HASH_CLOSE with
-      corroborating signals (same aspect ratio; flat images also need the
-      same mean color)
-    * ``"near_duplicate_possible"``  — hash-similar but signals disagree
-      (e.g. a crop or a reframe); surfaced for human review, never auto-merged
-    * ``"unique"``
     """
     distance = _hamming(hash_a, hash_b)
 
@@ -426,7 +341,7 @@ def validate_dataset(
         })
 
     # ---- near-duplicates: multi-signal classification, O(n^2) on
-    # fingerprints only — cheap for realistic dataset sizes. ----
+    # fingerprints only - cheap for realistic dataset sizes. ----
     seen_pairs: set[tuple[str, str]] = set()
     for i, fp_a in enumerate(fingerprints):
         for fp_b in fingerprints[i + 1:]:
@@ -453,8 +368,8 @@ def validate_dataset(
             )
 
     # ---- dimension consistency (informational) ----
-    if widths and len(set(zip(widths, heights))) > 1:
-        distinct = len(set(zip(widths, heights)))
+    if widths and len(set(zip(widths, heights, strict=True))) > 1:
+        distinct = len(set(zip(widths, heights, strict=True)))
         report.findings.append(
             ImageFinding("*", "(dataset)", "dimension_inconsistency",
                          f"{distinct} distinct dimensions; AI Toolkit will "

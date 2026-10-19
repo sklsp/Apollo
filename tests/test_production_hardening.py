@@ -14,10 +14,9 @@ import pytest
 from PIL import Image
 
 from app.services.dataset_validation import classify_pair, validate_dataset
-from app.services.hardware import HardwareInfo, GPUInfo
+from app.services.hardware import GPUInfo, HardwareInfo
 from app.services.rag.service import RAGService, content_hash
 from app.services.training_preflight import advise, diagnose_failure, estimate_vram_mb
-
 
 # ============================================
 # Deterministic embedding provider
@@ -28,7 +27,7 @@ class FakeEmbeddingClient:
     """Deterministic stand-in for EmbeddingClient.
 
     Hashes text into a fixed-dimension vector so the same text always embeds
-    identically and different text differs — enough for real FAISS behaviour.
+    identically and different text differs - enough for real FAISS behaviour.
     """
 
     model = "fake-embed-model"
@@ -180,7 +179,6 @@ class TestPersistentIndex:
         assert second.query("fresh under new")
 
     def test_corrupted_index_recovers_with_quarantine(self, tmp_path):
-        import json
         from pathlib import Path
 
         persist_dir = Path(tmp_path / "rag")
@@ -479,7 +477,7 @@ class TestPreflightIntegration:
         service = LoRATrainingService(projects=project_service)
         result = service.hardware_presets()
         assert "hardware" in result and "presets" in result
-        for preset_id, variants in result["presets"].items():
+        for _preset_id, variants in result["presets"].items():
             assert set(variants) >= {"label", "conservative", "balanced", "quality"}
             # Conservative is always at least as light as quality.
             cons = variants["conservative"]

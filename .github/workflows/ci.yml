@@ -6,6 +6,37 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: pip install "ruff==0.17.0"
+      - name: Lint (ruff)
+        run: ruff check .
+
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        # Full install (CPU-only torch first) so mypy resolves the same imports as locally;
+        # mypy.ini's pydantic plugin also needs pydantic present.
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-dev.txt
+      - name: Type check (mypy)
+        run: python -m mypy
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -19,6 +50,34 @@ jobs:
         # CPU-only torch first, so sentence-transformers does not pull the multi-GB CUDA build
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -r requirements.txt
-      - name: Run tests
-        run: python -m pytest
+          pip install -r requirements-dev.txt
+      - name: Run tests (with coverage)
+        # Coverage is reported for now; a minimum threshold will be added once the
+        # eval work has established what the number should protect.
+        run: python -m pytest --cov=app --cov-report=term-missing
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t apollo:ci .
+      - name: Smoke test (start container, wait for /live)
+        # The app boots fine without Ollama - the embedding client falls back to
+        # sentence-transformers and the vector store starts empty. /live is the
+        # dependency-free liveness probe; /health would 503 without Ollama.
+        run: |
+          docker run -d --name apollo -p 8000:8000 apollo:ci
+          for i in $(seq 1 60); do
+            if curl -fs http://localhost:8000/live > /dev/null; then
+              echo "alive after ${i} polls"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs apollo
+          exit 1
+      - name: Stop container
+        if: always()
+        run: docker stop apollo || true

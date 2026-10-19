@@ -1,4 +1,6 @@
-import importlib
+
+
+from typing import Any
 
 
 def test_main_defaults_to_interactive_agent(monkeypatch) -> None:
@@ -21,7 +23,7 @@ def test_main_defaults_to_interactive_agent(monkeypatch) -> None:
 def test_main_can_start_api_server(monkeypatch) -> None:
     import main as main_module
 
-    called = {}
+    called: dict[str, Any] = {}
 
     monkeypatch.setattr(main_module, "run_cli", lambda: called.setdefault("interactive", True))
 

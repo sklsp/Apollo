@@ -14,7 +14,7 @@ Design constraints (local-first, single user):
   loading an index built with a different model is refused rather than silently
   mixing incompatible vectors.
 * **Recoverable.** If the FAISS file is missing or unreadable but chunk
-  metadata survives, the store quarantines the bad files and reports the loss —
+  metadata survives, the store quarantines the bad files and reports the loss -
   the caller (RAGService) decides to re-embed from persisted documents.
 """
 
@@ -106,7 +106,9 @@ class VectorStore:
         self.persist_dir = Path(persist_dir) if persist_dir else None
         self._chunks: list[StoredChunk] = []
         self._embeddings: list[np.ndarray] = []
-        self._index = faiss.IndexFlatIP(dimension)
+        # Declared as the base Index type: faiss.read_index() may return any
+        # index class, and only add/search/ntotal are ever used on it.
+        self._index: faiss.Index = faiss.IndexFlatIP(dimension)
         self._dirty = False
 
         if self.persist_dir is not None:

@@ -1,0 +1,20 @@
+# Keep the build context small and free of local state/secrets.
+.git
+.github
+.env*
+.venv*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Runtime state — created at startup, lives in a volume (see Dockerfile).
+data/
+
+# Demo GIFs for the README; not used by the app.
+images/
+
+# Local test-suite logs.
+*.log

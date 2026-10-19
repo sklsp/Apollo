@@ -33,7 +33,7 @@ class OllamaClient:
         # Never return 4xx status codes as that confuses clients about endpoint availability
         if response.status_code == 404:
             # Ollama returns 404 both for unknown routes AND for "model not
-            # found" — distinguish them so the message points at the real fix.
+            # found" - distinguish them so the message points at the real fix.
             detail = _extract_ollama_error(response)
             if "not found, try pulling" in detail:
                 raise OllamaServiceError(
@@ -73,7 +73,7 @@ class OllamaClient:
         # Use chat completion with system role for simple prompt completion
         messages = [{"role": "user", "content": prompt}]
         response = self.chat_completion(model=model, messages=messages)
-        
+
         # Convert OpenAI response format to Ollama generate format for compatibility
         if "choices" in response and response["choices"]:
             return {

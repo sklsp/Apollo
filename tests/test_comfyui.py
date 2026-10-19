@@ -1,6 +1,6 @@
 """ComfyUI client, workflow handling, and generation submission.
 
-All tests run against a stub client — none of them require ComfyUI to be
+All tests run against a stub client - none of them require ComfyUI to be
 running, and none of them fabricate a successful generation.
 """
 
@@ -350,7 +350,6 @@ class TestGeneration:
         service.save_workflow("flow", sample_graph())
         graph, _ = service.build_graph("flow", {"prompt": "x"})
 
-        from app.core.jobs import Job
         job = service.jobs.create("comfyui_generation")
         service._run_generation(job, graph)
 

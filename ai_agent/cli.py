@@ -1,6 +1,7 @@
+import os
+
 from .core import run_agent
 from .io import import_document, list_supported_files
-import os
 
 
 def main():
@@ -9,7 +10,7 @@ def main():
     if os.path.exists(default_path):
         document = import_document(default_path)
 
-    print('AI Document Agent — interactive')
+    print('AI Document Agent - interactive')
     print('Commands: load <path>, summary, keywords, files, exit')
 
     while True:
