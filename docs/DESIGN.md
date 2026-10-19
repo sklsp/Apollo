@@ -93,3 +93,29 @@ that run without Ollama or ComfyUI.
 **Why:** launcher.py publishes Apollo through a public Cloudflare tunnel whose traffic reaches uvicorn from localhost, so "local" proves nothing and the token is the only gate between the dashboard and the internet.
 **Trade-off:** The cookie lives for 30 days on any machine that opens the link, and there are no per-user accounts or revocation: losing the token means regenerating it in .env.
 **Where:** `app/main.py` (`require_access_token`).
+
+## Questions people ask
+
+### Why FAISS and not Chroma, pgvector or Qdrant?
+
+I chose a flat FAISS index persisted as three files under DATA_DIR/rag because this is a single-user local app and I do not want to run a database server alongside it. With L2-normalized vectors the inner product equals cosine similarity, so `faiss.IndexFlatIP` in `app/services/rag/vector_store.py` answers exactly rather than approximately. Chroma or Qdrant would add an embedded or remote engine with no benefit at this scale, and pgvector would mean a Postgres process for one user's documents. The cost is that every query scans all chunks, which I accept while the index stays in the thousands of chunks (see "How would this work with a million chunks?").
+
+### How do you know the retrieval is any good?
+
+I score it against a committed set of 48 questions over 12 documents, run by `python -m evals.cli` in `evals/cli.py`, with document-level recall@k, MRR and hit-rate from `evals/metrics.py`. With production chunking (800/150) and the MiniLM fallback backend, vector retrieval hits every question at k=4: hit_rate@4 = 1.0, MRR = 0.9757, recall@4 = 0.9896. `tests/test_eval_regression.py` re-runs that pipeline in CI and fails if a summary metric drops by more than 1e-3 or a question loses its hit against the committed baseline in `evals/baselines/vector_service.json`. So "good" is a number I can diff, not a feeling.
+
+### What happens when the embedding model changes?
+
+meta.json records which model and dimension built the index, so `VectorStore.__init__()` in `app/services/rag/vector_store.py` raises `IndexIncompatibleError` on a mismatch instead of scoring vectors from different spaces against each other. The three index files are then moved into DATA_DIR/rag/quarantined with timestamps rather than deleted (decision 4), and the version map in `app/services/rag/service.py` keys documents by content hash plus model, so nothing is re-embedded until it changes again. In practice: switch models, upload your documents once, done; until then retrieval returns an empty index instead of wrong answers.
+
+### How do you avoid embedding the same document twice?
+
+`add_document()` in `app/services/rag/service.py` hashes the document text with SHA-256 and compares that hash, plus the embedding model name, against a per-document version record before it embeds anything. When both match it returns without touching the index, so re-uploading an unchanged file is free; when they differ, the stale chunks are dropped first so two versions of one document never coexist in the ranking. The records are rebuilt from chunk metadata at startup (`_rebuild_version_map()`), which means the check survives a restart with no extra state to corrupt.
+
+### Why is hybrid search not the default, or why is it?
+
+It is the default here: RAG_HYBRID in `app/core/config.py` defaults to auto, and `query()` in `app/services/rag/service.py` fuses vector and BM25 rankings with reciprocal rank fusion. The eval shows that on this corpus all three retrieval modes hit every question at k=4 (hit_rate@4 = 1.0), so fusion buys nothing here: plain vector scores MRR 0.9757 while auto fusion scores 0.9514, a small cost I accept because BM25 covers exact identifiers and code-like tokens where embeddings miss. The flag exists precisely because the numbers are this close; set RAG_HYBRID to vector or keyword if you want the other ranking back.
+
+### How would this work with a million chunks?
+
+What breaks first is the flat index: `faiss.IndexFlatIP` in `app/services/rag/vector_store.py` is exact but linear, so every query scans all one million vectors and latency grows in proportion to the corpus. I would move to an approximate index such as IVF or HNSW that trades a little recall for much shorter search time, batch the embedding calls harder (they already go through `embed_batch()`), and stop loading chunks.json whole into memory at startup. None of that was built: the indexed corpus here is 46 chunks, and I would not add approximate-search machinery until the numbers say I need it.
