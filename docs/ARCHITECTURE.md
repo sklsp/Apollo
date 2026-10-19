@@ -92,3 +92,38 @@ flowchart TD
 3. `DocumentService.store_document` persists the document record and returns its id; if indexing then fails, that record is deleted again as a rollback (`app/services/document_service.py`).
 4. `RAGService.add_document` skips unchanged content by hash, drops stale vectors for the doc, splits text with `chunk_text`, embeds it with `EmbeddingClient.embed_batch`, and appends to both stores (`app/services/rag/service.py`, `app/services/rag/chunking.py`, `app/services/rag/embeddings.py`).
 5. `_save` flushes the FAISS index plus chunks.json and meta.json atomically under DATA_DIR/rag, so a restart resumes without re-embedding (`app/services/rag/vector_store.py`).
+
+## What is stored where
+
+Everything persists under `data/`, which is created on first use. Nothing leaves
+the machine except calls to Ollama or ComfyUI that you pointed it at.
+
+| Path | What | Written by |
+|------|------|------------|
+| data/documents.json | Uploaded document records (id, text, source) | DocumentService (`app/services/document_service.py`) via JsonPersist |
+| data/sessions.json | Chat sessions and messages (last 50 sessions, last 200 messages each) | MemoryService (`app/services/memory_service.py`) via JsonPersist |
+| data/jobs.json | The last 200 background jobs for ComfyUI generation and LoRA training | JobStore._save (`app/core/jobs.py`) |
+| data/rag/index.faiss | The FAISS vector index of all document chunks | VectorStore.save (`app/services/rag/vector_store.py`) |
+| data/rag/chunks.json | Chunk text and metadata, one record per vector row | VectorStore.save (`app/services/rag/vector_store.py`) |
+| data/rag/meta.json | Index version, embedding model name, dimension and chunk count; a mismatch at load time is what triggers quarantine | VectorStore.save (`app/services/rag/vector_store.py`) |
+| data/loras/<project_id>/ | One folder per LoRA project: project.json, dataset images with captions, config/training.yml, trained .safetensors | LoRAProjectService (`app/services/lora_dataset_service.py`); training config and output written by LoRATrainingService (`app/services/lora_training_service.py`) |
+| data/generated/ | Generated images plus a provenance sidecar .json next to each one (workflow, seed, params) | ComfyUIService._save_outputs and _write_provenance (`app/services/comfyui_service.py`) |
+
+## When something is down
+
+Each external dependency can be missing or broken without taking the rest of
+the app down. Every row names the function that handles it.
+
+| Situation | What the user sees | Code |
+|-----------|--------------------|------|
+| Ollama is down while chatting | HTTP 503 with a safe message; embedding calls do not fail, they fall back silently to local sentence-transformers | `OllamaClient._request` raises OllamaServiceError (503); the chat route converts it via to_http_exception (`app/clients/ollama_client.py`, `app/api/routes.py`) |
+| The embedding model is missing (nomic-embed-text not pulled) | RAG keeps working on the local backend; if sentence-transformers is also absent, a 503 with an install hint appears and /rag/status reports which backend is active | `EmbeddingClient.embed_batch` falls back to `_embed_with_sentence_transformers`, which raises that 503 (`app/services/rag/embeddings.py`) |
+| ComfyUI is down | The status card shows disconnected; queued generation jobs appear as failed with the connection error message | `ComfyUIService.status` reports connected false plus the error; `JobStore._run` catches every worker exception and records it on the job (`app/services/comfyui_service.py`, `app/core/jobs.py`) |
+| AI Toolkit is not configured | HTTP 503 telling you to set AI_TOOLKIT_PATH and AI_TOOLKIT_PYTHON in your .env file | `AIToolkitProcess.start` raises AIToolkitError before launching anything (`app/services/lora_training_service.py`) |
+| The vector index is corrupted or built with a different model | The app boots normally; /rag/status shows 0 chunks until documents are re-uploaded, and the old files sit in data/rag/quarantined/ for inspection | `RAGService._load_store` catches IndexIncompatibleError and calls `_quarantine_files`, which moves index.faiss, chunks.json and meta.json out of the way (`app/services/rag/service.py`) |
+| The server restarts while a job is running | Those jobs appear in the list as failed with "Interrupted by application restart" | `JobStore._load` marks RUNNING or QUEUED jobs as failed at startup (`app/core/jobs.py`) |
+
+## More
+
+- [EVAL.md](EVAL.md): how the RAG evals and their regression gate work.
+- [DESIGN.md](DESIGN.md): design notes, not written yet; this link is a placeholder for it.
