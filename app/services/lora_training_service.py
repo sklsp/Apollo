@@ -660,6 +660,7 @@ class LoRATrainingService:
         while trainer.is_running():
             if self.jobs.is_cancelled(job.id):
                 trainer.stop()
+                self._active.pop(project_id, None)
                 self.projects.update_project(project_id, training_status="cancelled")
                 self._finish_run_record(project_id, job.id, status="cancelled")
                 logger.info("[LORA TRAINING] %s cancelled", project_id)

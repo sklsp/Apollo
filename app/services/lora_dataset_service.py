@@ -14,6 +14,7 @@ from __future__ import annotations
 import base64
 import logging
 import re
+import threading
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -87,6 +88,18 @@ class LoRAProjectService:
         self.data_dir = Path(data_dir or settings.lora_data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.ollama_client = ollama_client or OllamaClient()
+        # Per-project locks: update_project is a read-modify-write on project.json and
+        # runs from both the request thread and training worker threads concurrently.
+        self._project_locks: dict[str, threading.Lock] = {}
+        self._locks_guard = threading.Lock()
+
+    def _lock_for(self, project_id: str) -> threading.Lock:
+        with self._locks_guard:
+            lock = self._project_locks.get(project_id)
+            if lock is None:
+                lock = threading.Lock()
+                self._project_locks[project_id] = lock
+            return lock
 
     # ---------- paths ----------
 
@@ -165,12 +178,13 @@ class LoRAProjectService:
         return projects
 
     def update_project(self, project_id: str, **fields: Any) -> LoRAProject:
-        project = self.get_project(project_id)
-        for key, value in fields.items():
-            if value is not None and hasattr(project, key):
-                setattr(project, key, value)
-        self._save_project(project)
-        return project
+        with self._lock_for(project_id):
+            project = self.get_project(project_id)
+            for key, value in fields.items():
+                if value is not None and hasattr(project, key):
+                    setattr(project, key, value)
+            self._save_project(project)
+            return project
 
     def delete_project(self, project_id: str) -> bool:
         import shutil

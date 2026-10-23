@@ -11,6 +11,7 @@ import json
 import os
 import re
 import tempfile
+import time
 from pathlib import Path
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
@@ -120,7 +121,11 @@ def is_safetensors(path: Path) -> bool:
 
 
 def write_json_atomic(path: str | Path, payload: object) -> None:
-    """Write JSON via a temp file + replace, so a crash cannot truncate state."""
+    """Write JSON via a temp file + replace, so a crash cannot truncate state.
+
+    On Windows ``os.replace`` can fail with PermissionError when another thread
+    replaces the same target at the same instant; retry briefly before giving up.
+    """
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     handle = tempfile.NamedTemporaryFile(
@@ -129,16 +134,44 @@ def write_json_atomic(path: str | Path, payload: object) -> None:
     try:
         with handle:
             json.dump(payload, handle, indent=2, default=str)
-        os.replace(handle.name, target)
+        _replace_with_retry(handle.name, target)
     except BaseException:
         Path(handle.name).unlink(missing_ok=True)
         raise
 
 
+def _replace_with_retry(source: str, target: Path, attempts: int = 10) -> None:
+    """``os.replace`` with a short backoff for Windows replace races."""
+    delay = 0.005
+    for attempt in range(attempts):
+        try:
+            os.replace(source, target)
+            return
+        except PermissionError:
+            if attempt + 1 >= attempts:
+                raise
+            time.sleep(delay)
+            delay *= 2
+
+
 def read_json(path: str | Path, default: object = None) -> object:
-    """Read JSON, returning ``default`` when the file is missing or corrupt."""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return json.load(handle)
-    except (OSError, json.JSONDecodeError):
-        return default
+    """Read JSON, returning ``default`` when the file is missing or corrupt.
+
+    On Windows, opening a file that another thread is atomically replacing can
+    transiently fail with Access Denied; retry briefly before giving up.
+    """
+    delay = 0.005
+    for attempt in range(10):
+        try:
+            with open(path, encoding="utf-8") as handle:
+                return json.load(handle)
+        except FileNotFoundError:
+            return default
+        except OSError:
+            if attempt + 1 >= 10:
+                return default
+            time.sleep(delay)
+            delay *= 2
+        except json.JSONDecodeError:
+            return default
+    return default
