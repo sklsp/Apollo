@@ -206,9 +206,11 @@ def project(project_service):
 
 def png_bytes(size: int = 64) -> bytes:
     """A minimal but genuinely valid 1x1 PNG, padded to ``size`` bytes."""
-    png = bytes.fromhex(
-        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4"
-        "890000000a49444154789c6360000002000100ffff0300000600055773d8b400"
-        "00000049454e44ae426082"
-    )
+    from io import BytesIO
+
+    from PIL import Image
+
+    buffer = BytesIO()
+    Image.new("RGBA", (1, 1), color=(255, 0, 0, 255)).save(buffer, format="PNG")
+    png = buffer.getvalue()
     return png + b"\x00" * max(0, size - len(png))
