@@ -1,12 +1,10 @@
-# Feature demo GIFs
+# README screenshots
 
-| File | Feature |
-|------|---------|
-| `chat.gif` | Basic chat |
-| `session.gif` | New chat / session memory |
-| `rag.gif` | Document upload + Q&A |
-| `toggle.gif` | Use Documents on/off |
-| `prompts.gif` | Create and use prompt templates |
-| `prompt-edit.gif` | Edit and delete prompts |
+| File | Shows |
+|------|-------|
+| `chat-rag.png` | Chat answering from an uploaded document |
+| `home.png` | Workspace dashboard |
+| `lora-dataset.png` | LoRA Studio dataset quality check |
+| `comfyui.png` | ComfyUI generation page |
 
-Referenced from the README **Feature Demo** section.
+Taken 2026-10-24 at 1440x900 with demo data. Referenced from the README **Screenshots** section.
