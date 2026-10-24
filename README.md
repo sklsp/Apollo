@@ -48,55 +48,31 @@ Open **http://localhost:8000**, or use the auto-generated Cloudflare tunnel URL 
 
 ---
 
-## Feature Demo
+## Screenshots
 
-> GIFs live in `images/`. 
+### Chat with your documents (RAG)
 
-### Basic Chat
+Upload a PDF, DOCX or TXT file and ask about it. The answer below comes from the uploaded remote-work policy: Apollo retrieved the right chunks from FAISS and the local model answered from them.
 
-Simple conversation with a local LLM, fast, private, and fully offline-capable.
+![Chat answering a question from an uploaded document](images/chat-rag.png)
 
-![Basic chat demo](images/chat.gif)
+### Workspace dashboard
 
----
+Counts for documents, chunks, datasets and jobs, plus a health check that tells you which local service each feature needs.
 
-### Session Memory
+![Workspace dashboard](images/home.png)
 
-Create new chats and switch between sessions. Conversation history persists per session during runtime.
+### LoRA Studio: dataset quality control
 
-![Session memory demo](images/session.gif)
+One click scores a training set from 0 to 100. Here it catches an exact copy (`bottle_02_copy.jpg`) and two near duplicates before any GPU time is spent.
 
----
+![Dataset quality check in LoRA Studio](images/lora-dataset.png)
 
-### Document Q&A (RAG)
+### ComfyUI generation
 
-Upload PDF, DOCX, or TXT files and ask questions about their content. Documents are chunked, embedded, and indexed in FAISS.
+Pick an imported workflow, set the prompt and parameters, and check the graph before it is queued.
 
-![Document RAG demo](images/rag.gif)
-
----
-
-### Toggle Document Usage
-
-Enable or disable document context per session. Compare pure LLM answers vs RAG-enhanced responses with one click.
-
-![Document toggle demo](images/toggle.gif)
-
----
-
-### Prompt Library
-
-Create reusable prompt templates and apply them from the chat header. Use `{input}` as a placeholder for the user's message.
-
-![Prompt library demo](images/prompts.gif)
-
----
-
-### Prompt Management
-
-Edit and delete saved prompts from the library panel. Templates sync via the REST API (`GET/POST/PUT/DELETE /prompts`).
-
-![Prompt edit demo](images/prompt-edit.gif)
+![ComfyUI generation page](images/comfyui.png)
 
 ---
 
@@ -178,7 +154,7 @@ or process adapter. Nothing in the document pipeline imports ComfyUI code.
 
 ## Engineering
 
-- **Tested:** the suite runs without Ollama or ComfyUI (425 tests). CI runs lint (ruff), a type check (mypy), the tests with coverage reporting, a retrieval regression gate and a Docker build.
+- **Tested:** the suite runs without Ollama or ComfyUI (864 tests, 97% line coverage). CI runs lint (ruff), a type check (mypy), the tests with a 95% coverage floor, a retrieval regression gate and a Docker build.
 - **Measured:** retrieval is scored on 48 questions: MiniLM hit@4 1.0000, MRR 0.9757. See [docs/EVAL.md](docs/EVAL.md).
 - **Documented:** [architecture](docs/ARCHITECTURE.md) and [design decisions and trade-offs](docs/DESIGN.md).
 
@@ -491,9 +467,9 @@ Apollo/
 │   ├── smoke_preflight.py        # Live training-preflight demo
 │   └── smoke_rag_persistence.py  # Restart-survival verification for the index
 ├── workflows/                    # ComfyUI workflows + node-input mappings
-├── tests/                        # Test suite (425 tests) + legacy debug scripts
+├── tests/                        # Test suite (864 tests) + legacy debug scripts
 ├── data/                         # Documents, sessions, jobs, LoRA projects, generated images, rag index
-├── images/                       # Feature demo GIFs (README showcase)
+├── images/                       # README screenshots
 ├── launcher.py                   # One-command startup (API + tunnel)
 ├── main.py                       # CLI / API entrypoint
 ├── .env.example                  # Example environment variables
@@ -665,7 +641,7 @@ Local-first does not mean unguarded:
 - Documents, sessions, jobs, LoRA projects, workflows and generated images all persist on disk
 - Upload debug logs appear in the server console: `[UPLOAD] filename`, `extracted chars`, `rag chunks indexed`
 - Utility scripts: `python scripts/verify_system.py`, `python scripts/diagnostics_ollama.py`
-- Run the tests with `python -m pytest` (425 tests); stress tests: `pytest tests/test_stress.py -m slow`
+- Run the tests with `python -m pytest` (864 tests); stress tests: `pytest tests/test_stress.py -m slow`
 - Log prefixes: `[COMFYUI]`, `[COMFYUI JOB]`, `[LORA]`, `[LORA TRAINING]`, `[DATASET]`, `[RAG]`, `[RUN HISTORY]`
 - `tests/` also contains standalone diagnostic scripts (`test_endpoints.py`,
   `test_ollama_detailed.py`, …) that predate the suite. They print at import time
