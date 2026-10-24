@@ -52,9 +52,9 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements-dev.txt
       - name: Run tests (with coverage)
-        # Coverage is reported for now; a minimum threshold will be added once the
-        # eval work has established what the number should protect.
-        run: python -m pytest --cov=app --cov-report=term-missing
+        # The gate sits two points under the current TOTAL (97%) so small platform
+        # differences in CI cannot flip the build; raise it as coverage grows.
+        run: python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=95
 
   docker:
     runs-on: ubuntu-latest
