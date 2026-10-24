@@ -23,15 +23,13 @@ from types import SimpleNamespace
 import pytest
 
 from app.core.exceptions import AIToolkitError, LoRAProjectError
-from app.services.hardware import GPUInfo, HardwareInfo
 from app.core.jobs import JobStatus, JobStore
+from app.services.hardware import GPUInfo, HardwareInfo
 from app.services.lora_dataset_service import LoRAProjectService
 from app.services.lora_training_service import (
-    AIToolkitProcess,
     LoRATrainingService,
 )
 from tests.conftest import png_bytes
-
 
 # ============================================
 # FAKE AI TOOLKIT

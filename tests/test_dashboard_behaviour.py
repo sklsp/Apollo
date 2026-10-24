@@ -10,7 +10,6 @@ from types import SimpleNamespace
 import pytest
 import requests
 
-
 # ---------- fakes -----------------------------------------------------------
 
 

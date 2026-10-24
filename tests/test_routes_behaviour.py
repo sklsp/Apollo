@@ -12,7 +12,6 @@ codes - without touching disk or the network.
 from __future__ import annotations
 
 import asyncio
-import os
 from types import SimpleNamespace
 
 import pytest
@@ -22,7 +21,6 @@ from fastapi.testclient import TestClient
 from app.api.routes import _build_system_prompt, router, upload_document
 from app.core.config import settings
 from app.core.exceptions import OllamaServiceError
-
 
 # ============================================
 # FAKES (recording stand-ins for the five services)

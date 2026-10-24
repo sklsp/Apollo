@@ -481,7 +481,6 @@ class TestValidateDatasetDuplicates:
 
     def test_possible_verdict_flagged_with_lower_severity(self, monkeypatch):
         import app.services.dataset_validation as dv
-
         from app.services.dataset_validation import validate_dataset
 
         images = {k: _png(300, 300) for k in ("a", "b", "c")}
@@ -510,7 +509,6 @@ class TestValidateDatasetDuplicates:
 
     def test_repeated_id_pair_produces_single_finding(self, monkeypatch):
         import app.services.dataset_validation as dv
-
         from app.services.dataset_validation import validate_dataset
 
         # First and third entries share id "a", so the (a, b) id-pair is seen

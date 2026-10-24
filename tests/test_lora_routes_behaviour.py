@@ -18,10 +18,11 @@ import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
-from app.api.lora_routes import _http_error, router as lora_router
+from app.api.lora_routes import _http_error
+from app.api.lora_routes import router as lora_router
 from app.core.config import settings
 from app.core.exceptions import ServiceError
-from app.core.jobs import JobStore, JobStatus
+from app.core.jobs import JobStatus, JobStore
 from app.core.paths import UnsafePathError
 from app.services.hardware import GPUInfo, HardwareInfo
 from app.services.lora_dataset_service import LoRAProjectService
