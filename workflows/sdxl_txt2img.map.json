@@ -1,6 +1,6 @@
 {
   "name": "SDXL Text to Image",
-  "description": "Plain SDXL text-to-image. No LoRA required \u2014 works as soon as ComfyUI is up.",
+  "description": "Plain SDXL text-to-image. No LoRA required; works as soon as ComfyUI is up.",
   "arch": "sdxl",
   "inputs": {
     "prompt": {

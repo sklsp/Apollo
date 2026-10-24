@@ -64,13 +64,13 @@ Counts for documents, chunks, datasets and jobs, plus a health check that tells 
 
 ### LoRA Studio: dataset quality control
 
-One click scores a training set from 0 to 100. Here it catches an exact copy (`bottle_02_copy.jpg`) and two near duplicates before any GPU time is spent.
+One click scores a training set from 0 to 100. The photos here were generated through Apollo's own ComfyUI page; the check flags `mug_03_copy.png` as an exact copy before any GPU time is spent on training.
 
 ![Dataset quality check in LoRA Studio](images/lora-dataset.png)
 
 ### ComfyUI generation
 
-Pick an imported workflow, set the prompt and parameters, and check the graph before it is queued.
+Pick an imported workflow, set the prompt and parameters, and check the graph before it is queued. Every result keeps a sidecar with its workflow, prompt, seed and LoRA settings.
 
 ![ComfyUI generation page](images/comfyui.png)
 
