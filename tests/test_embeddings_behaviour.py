@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import sys
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pytest
@@ -39,7 +40,7 @@ class FakeOllamaClient:
 class FakeSentenceTransformer:
     """Records construction and encode calls; returns canned vectors."""
 
-    instances = []
+    instances: list[Any] = []
 
     def __init__(self, model_name_or_path):
         self.model_name_or_path = model_name_or_path

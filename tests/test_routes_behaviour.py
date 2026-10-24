@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 from fastapi import FastAPI, HTTPException
@@ -609,7 +610,7 @@ def test_upload_document_rejects_falsy_filename(routes_env) -> None:
 
     fake_file = SimpleNamespace(filename="", read=_never_read)
     with pytest.raises(HTTPException) as excinfo:
-        asyncio.run(upload_document(fake_file, routes_env.docs, routes_env.rag))
+        asyncio.run(upload_document(cast(Any, fake_file), routes_env.docs, routes_env.rag))
 
     assert excinfo.value.status_code == 400
     assert excinfo.value.detail == "Filename is required"

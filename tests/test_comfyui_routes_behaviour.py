@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
@@ -21,7 +23,7 @@ class FakeWorkflowInfo:
 
 
 def _job(job_id: str, status: JobStatus = JobStatus.QUEUED, **overrides) -> Job:
-    data = {
+    data: dict[str, Any] = {
         "id": job_id,
         "type": "generation",
         "status": status,
@@ -218,7 +220,7 @@ def client():
     return TestClient(app)
 
 
-QUEUED_JOB_RESPONSE = {
+QUEUED_JOB_RESPONSE: dict[str, Any] = {
     "id": "gen-1",
     "type": "generation",
     "status": "queued",

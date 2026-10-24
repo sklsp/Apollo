@@ -96,6 +96,7 @@ def _wait_for_terminal(jobs: JobStore, job_id: str, timeout: float = 20.0) -> ob
     deadline = time.monotonic() + timeout
     while True:
         job = jobs.get(job_id)
+        assert job is not None
         if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
             return job
         assert time.monotonic() < deadline, f"job {job_id} stuck in {job.status}"
@@ -107,6 +108,7 @@ def _wait_for_status(jobs: JobStore, job_id: str, status: JobStatus, timeout: fl
     deadline = time.monotonic() + timeout
     while True:
         job = jobs.get(job_id)
+        assert job is not None
         if job.status is status:
             return job
         if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
