@@ -10,6 +10,7 @@ project removes its history atomically (no cross-folder cleanup needed).
 from __future__ import annotations
 
 import logging
+import threading
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -64,6 +65,18 @@ class RunHistory:
 
     def __init__(self, projects_service: Any) -> None:
         self.projects = projects_service
+        # Per-project locks: runs.json is read-modify-written by the request thread
+        # (create_run) and training worker threads (update_run) concurrently.
+        self._locks: dict[str, threading.Lock] = {}
+        self._guard = threading.Lock()
+
+    def _lock_for(self, project_id: str) -> threading.Lock:
+        with self._guard:
+            lock = self._locks.get(project_id)
+            if lock is None:
+                lock = threading.Lock()
+                self._locks[project_id] = lock
+            return lock
 
     def _path(self, project_id: str) -> Path:
         return self.projects.project_dir(project_id) / "runs.json"
@@ -109,23 +122,25 @@ class RunHistory:
             job_id=job_id,
         ).to_dict()
 
-        runs = self.list_runs(project_id)
-        runs.insert(0, run)
-        self._save(project_id, runs)
+        with self._lock_for(project_id):
+            runs = self.list_runs(project_id)
+            runs.insert(0, run)
+            self._save(project_id, runs)
         logger.info("[RUN HISTORY] %s: created run %s", project_id, run["id"])
         return run
 
     def update_run(self, project_id: str, run_id: str, **fields: Any) -> dict[str, Any] | None:
-        runs = self.list_runs(project_id)
-        for run in runs:
-            if run.get("id") != run_id:
-                continue
-            for key, value in fields.items():
-                if key in TrainingRun.__dataclass_fields__:
-                    run[key] = value
-            self._save(project_id, runs)
-            return run
-        return None
+        with self._lock_for(project_id):
+            runs = self.list_runs(project_id)
+            for run in runs:
+                if run.get("id") != run_id:
+                    continue
+                for key, value in fields.items():
+                    if key in TrainingRun.__dataclass_fields__:
+                        run[key] = value
+                self._save(project_id, runs)
+                return run
+            return None
 
     def latest_run(self, project_id: str) -> dict[str, Any] | None:
         runs = self.list_runs(project_id)
