@@ -154,7 +154,7 @@ or process adapter. Nothing in the document pipeline imports ComfyUI code.
 
 ## Engineering
 
-- **Tested:** the suite runs without Ollama or ComfyUI (878 tests, 97% line coverage). CI runs lint (ruff), a type check (mypy), the tests with a 95% coverage floor, a retrieval regression gate and a Docker build.
+- **Tested:** the suite runs without Ollama or ComfyUI (878 tests, 96% line coverage). CI runs lint (ruff), a type check (mypy), the tests with a 95% coverage floor, a retrieval regression gate and a Docker build.
 - **Measured:** retrieval is scored on 48 questions: MiniLM hit@4 1.0000, MRR 0.9757. See [docs/EVAL.md](docs/EVAL.md).
 - **Documented:** [architecture](docs/ARCHITECTURE.md) and [design decisions and trade-offs](docs/DESIGN.md).
 
