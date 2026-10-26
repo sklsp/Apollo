@@ -39,3 +39,21 @@ class TestEnsureEmbeddings:
         reloaded._ensure_embeddings()
 
         assert reloaded._embeddings is first
+
+
+class TestRemoveAfterRestart:
+    def test_remove_then_second_restart_keeps_the_survivor(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+        reloaded = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+
+        removed = reloaded.remove_by_doc_id("doc_a")
+
+        assert removed == 2
+        assert reloaded.size == 1
+        results = reloaded.search(_vec(2), top_k=5)
+        assert [r.doc_id for r in results] == ["doc_b"]
+
+        reloaded.save()
+        again = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        assert again.size == 1

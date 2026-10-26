@@ -309,6 +309,7 @@ class VectorStore:
 
     def remove_by_doc_id(self, doc_id: str) -> int:
         """Remove all chunks for a document and rebuild the index."""
+        self._ensure_embeddings()
         remaining_chunks: list[StoredChunk] = []
         remaining_embeddings: list[np.ndarray] = []
         removed = 0
