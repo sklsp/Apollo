@@ -94,3 +94,53 @@ class TestTwoRestartCycles:
         assert s3.indexed_doc_ids == {"doc_c"}
         results = s3.search(_vec(3), top_k=5)
         assert [r.doc_id for r in results] == ["doc_c"]
+
+
+class TestEveryPublicMethodAfterRestart:
+    def test_size(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+        store = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        assert store.size == 3
+
+    def test_indexed_doc_ids(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+        store = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        assert store.indexed_doc_ids == {"doc_a", "doc_b"}
+
+    def test_search(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+        store = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        results = store.search(_vec(0), top_k=1)
+        assert [r.doc_id for r in results] == ["doc_a"]
+
+    def test_add(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+        store = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        store.add(np.vstack([_vec(3)]), [_chunk("doc_c", 0)])
+        assert store.size == 4
+
+    def test_remove_by_doc_id(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+        store = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        assert store.remove_by_doc_id("doc_a") == 2
+
+    def test_clear(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+        store = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        store.clear()
+        assert store.size == 0
+
+    def test_save(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+        store = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        store.add(np.vstack([_vec(3)]), [_chunk("doc_c", 0)])
+        store.save()
+        reloaded = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        assert reloaded.size == 4
