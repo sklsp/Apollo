@@ -276,6 +276,7 @@ class VectorStore:
                 f"Expected dimension {self.dimension}, got {embeddings.shape[1]}"
             )
 
+        self._ensure_embeddings()
         self._index.add(embeddings.astype(np.float32))
         for row, chunk in zip(embeddings, chunks, strict=True):
             self._embeddings.append(np.asarray(row, dtype=np.float32))
