@@ -214,6 +214,12 @@ class VectorStore:
                     meta.vector_count, self.persist_dir)
         return True
 
+    def _ensure_embeddings(self) -> None:
+        """Rebuild the per-chunk embeddings from the FAISS index when a restored index left them empty."""
+        if len(self._embeddings) != len(self._chunks):
+            matrix = self._index.reconstruct_n(0, self._index.ntotal)
+            self._embeddings = [np.asarray(row, dtype=np.float32) for row in matrix]
+
     def save(self) -> None:
         """Flush index + metadata atomically. Cheap enough to call per change."""
         if self.persist_dir is None or not self._dirty:
@@ -270,6 +276,7 @@ class VectorStore:
                 f"Expected dimension {self.dimension}, got {embeddings.shape[1]}"
             )
 
+        self._ensure_embeddings()
         self._index.add(embeddings.astype(np.float32))
         for row, chunk in zip(embeddings, chunks, strict=True):
             self._embeddings.append(np.asarray(row, dtype=np.float32))
@@ -303,6 +310,7 @@ class VectorStore:
 
     def remove_by_doc_id(self, doc_id: str) -> int:
         """Remove all chunks for a document and rebuild the index."""
+        self._ensure_embeddings()
         remaining_chunks: list[StoredChunk] = []
         remaining_embeddings: list[np.ndarray] = []
         removed = 0

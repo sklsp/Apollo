@@ -377,10 +377,6 @@ class TestRemoveAndClear:
         assert store.remove_by_doc_id("ghost") == 0
         assert store.size == 1
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="bug: _load() drops embeddings but remove_by_doc_id zips them with strict=True",
-    )
     def test_remove_after_restart(self, tmp_path):
         persist = tmp_path / "rag"
         _save_store(persist)
