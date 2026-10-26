@@ -73,3 +73,24 @@ class TestAddAfterRestart:
         results = store.search(_vec(3), top_k=5)
         assert results[0].doc_id == "doc_new"
         assert len(store._embeddings) == len(store._chunks)
+
+
+class TestTwoRestartCycles:
+    def test_two_full_restart_cycles_keep_the_store_consistent(self, tmp_path):
+        persist = tmp_path / "rag"
+        _save_store(persist)
+
+        s1 = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        assert s1.remove_by_doc_id("doc_a") == 2
+        s1.save()
+
+        s2 = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        s2.add(np.vstack([_vec(3)]), [_chunk("doc_c", 0)])
+        assert s2.remove_by_doc_id("doc_b") == 1
+        s2.save()
+
+        s3 = VectorStore(4, persist_dir=persist, embedding_model="model-a")
+        assert s3.size == 1
+        assert s3.indexed_doc_ids == {"doc_c"}
+        results = s3.search(_vec(3), top_k=5)
+        assert [r.doc_id for r in results] == ["doc_c"]
