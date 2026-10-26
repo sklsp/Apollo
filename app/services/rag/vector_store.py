@@ -214,6 +214,12 @@ class VectorStore:
                     meta.vector_count, self.persist_dir)
         return True
 
+    def _ensure_embeddings(self) -> None:
+        """Rebuild the per-chunk embeddings from the FAISS index when a restored index left them empty."""
+        if len(self._embeddings) != len(self._chunks):
+            matrix = self._index.reconstruct_n(0, self._index.ntotal)
+            self._embeddings = [np.asarray(row, dtype=np.float32) for row in matrix]
+
     def save(self) -> None:
         """Flush index + metadata atomically. Cheap enough to call per change."""
         if self.persist_dir is None or not self._dirty:
